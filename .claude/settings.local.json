@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(powershell -Command \"Stop-Process -Id 28188 -Force -ErrorAction SilentlyContinue; Get-Process node -ErrorAction SilentlyContinue | Select-Object Id\")",
+      "Bash(node -e \"const s=require\\('crypto'\\).randomBytes\\(48\\).toString\\('base64url'\\); const fs=require\\('fs'\\); const p='.env'; if\\(fs.existsSync\\(p\\)\\){console.log\\('.env exists, leaving it'\\);} else { fs.writeFileSync\\(p, 'DATABASE_URL=file:./dhosae.db\\\\nAUTH_SECRET='+s+'\\\\n'\\); console.log\\('wrote .env with AUTH_SECRET length', s.length\\); }\")",
+      "Bash(curl -s http://localhost:4321/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" http://localhost:4321/studio)",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code}\\\\n\" http://localhost:4321/posts/the-only-numbers-that-matter)",
+      "Bash(curl -s http://localhost:4321/posts/the-only-numbers-that-matter)",
+      "Bash(curl -s -d \"password=totally-wrong\" http://localhost:4321/studio/login)",
+      "Bash(curl -s -c fresh.txt -d \"password=Test1234\" -o /dev/null -w \"login: %{http_code} -> %{redirect_url}\\\\n\" http://localhost:4321/studio/login)",
+      "Bash(curl -s -b fresh.txt http://localhost:4321/studio)",
+      "Bash(rm -f dhosae.db dhosae.db-wal dhosae.db-shm)",
+      "Bash(ls dhosae.db)",
+      "Bash(printf \"\\\\n# local database\\\\ndhosae.db\\\\ndhosae.db-*\\\\n\")",
+      "Bash(curl -s -o /dev/null -w \"/studio -> %{http_code} %{redirect_url}\\\\n\" http://localhost:4321/studio)",
+      "Bash(curl -s -o /dev/null -w \"homepage after config change: %{http_code}\\\\n\" http://localhost:4321/)",
+      "Bash(curl -s -o /dev/null -w \"homepage: %{http_code}\\\\n\" http://localhost:4321/)",
+      "Bash(curl -s -o /dev/null -w \"studio gate: %{http_code} -> %{redirect_url}\\\\n\" http://localhost:4321/studio)",
+      "Bash(curl -s -o /dev/null -w \"reading page: %{http_code}\\\\n\" http://localhost:4321/posts/inflation-is-a-story)",
+      "Bash(curl -s -o /dev/null -w \"home: %{http_code}\\\\n\" http://localhost:4321/)",
+      "Bash(echo \"npm: $\\(npm -v \\)\")",
+      "Bash(git --version)",
+      "Bash(echo \"git: $\\(git --version || echo 'NOT INSTALLED'\\)\")",
+      "Bash(vercel --version)",
+      "Bash(echo \"vercel: $\\(vercel --version || echo 'not installed'\\)\")",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git -c user.email=\"orangehead0007@gmail.com\" -c user.name=\"dhosae\" commit -q -m \"dhosae: site + private studio + emotions band + footer studio link\")",
+      "Bash(grep -E '\\\\.env$|dhosae\\\\.db')"
+    ]
+  }
+}

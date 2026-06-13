@@ -1,0 +1,87 @@
+---
+import Studio from "../../layouts/Studio.astro";
+import { getPosts, getContent } from "../../lib/db";
+import { formatDate } from "../../lib/format";
+
+const posts = await getPosts({ includeDrafts: true });
+const creedTitle = await getContent("creed_title");
+---
+
+<Studio title="studio · dhosae">
+  <header class="head">
+    <div>
+      <p class="eyebrow" style="color:var(--violet-ink)">your studio</p>
+      <h1 class="s-h">The writing</h1>
+      <p class="s-sub">Everything here is yours to write, edit, or remove. Nothing is published until you say so.</p>
+    </div>
+    <a href="/studio/new" class="btn btn--violet">＋ New piece</a>
+  </header>
+
+  {creedTitle.trim() === "" && (
+    <a href="/studio/creed" class="nudge">
+      <strong>Write your "why I do it this way".</strong>
+      <span>The creed on your homepage is empty — tell readers, in your own words, why this place exists. →</span>
+    </a>
+  )}
+
+  <ol class="plist">
+    {posts.length === 0 && <li class="empty">No pieces yet. Start your first one →</li>}
+    {posts.map((p) => (
+      <li class="prow">
+        <a href={`/studio/${p.slug}`} class="prow__link">
+          <span class="prow__main">
+            <span class="prow__title">{p.title}</span>
+            <span class="prow__meta mono">
+              {p.featured && <em class="badge badge--violet">way-in</em>}
+              {p.draft && <em class="badge badge--draft">draft</em>}
+              <time>{formatDate(new Date(p.publishedAt))}</time>
+              {p.readingMinutes && <span>· {p.readingMinutes} min</span>}
+            </span>
+          </span>
+          <span class="prow__edit mono">edit →</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+</Studio>
+
+<style>
+  .head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem;
+  }
+  .head .s-h { font-size: var(--step-4); margin-top: 0.3rem; }
+
+  .nudge {
+    display: block; background: var(--violet-wash); border: 1px solid #d9c9fb;
+    border-radius: var(--radius-lg); padding: 1rem 1.2rem; margin-bottom: 1.6rem;
+    transition: transform 200ms var(--ease);
+  }
+  .nudge:hover { transform: translateY(-2px); }
+  .nudge strong { display: block; color: var(--violet-ink); }
+  .nudge span { color: var(--ink-2); font-size: var(--step--1); }
+
+  .plist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .empty { padding: 2rem 0; color: var(--ink-3); }
+  .prow { border-bottom: 1px solid var(--line); }
+  .prow__link {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1.1rem 0.5rem; border-radius: var(--radius);
+    transition: background 160ms var(--ease), padding-left 200ms var(--ease);
+  }
+  .prow__link:hover { background: var(--paper); padding-left: 0.9rem; }
+  .prow__title {
+    font-family: var(--font-display); font-size: var(--step-2); letter-spacing: -0.02em;
+    color: var(--ink); display: block;
+  }
+  .prow__link:hover .prow__title { color: var(--violet-ink); }
+  .prow__meta { display: flex; align-items: center; gap: 0.5rem; color: var(--ink-3); font-size: 0.78rem; margin-top: 0.3rem; }
+  .badge {
+    font-style: normal; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.1rem 0.4rem; border-radius: 100px;
+  }
+  .badge--violet { color: var(--violet-ink); background: var(--violet-wash); }
+  .badge--draft { color: var(--ink-3); background: var(--paper-3); }
+  .prow__edit { color: var(--ink-4); font-size: 0.78rem; white-space: nowrap; }
+  .prow__link:hover .prow__edit { color: var(--violet-ink); }
+</style>

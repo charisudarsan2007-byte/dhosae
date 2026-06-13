@@ -1,0 +1,56 @@
+---
+import Studio from "../../layouts/Studio.astro";
+import { hasAdmin, setAdminHash } from "../../lib/db";
+import { hashPassword, createSession, SESSION_COOKIE, cookieOptions } from "../../lib/auth";
+
+let error = "";
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const pw = String(form.get("password") ?? "");
+  const pw2 = String(form.get("confirm") ?? "");
+  if (await hasAdmin()) {
+    return Astro.redirect("/studio/login");
+  } else if (pw.length < 8) {
+    error = "Use at least 8 characters.";
+  } else if (pw !== pw2) {
+    error = "The two passwords don't match.";
+  } else {
+    await setAdminHash(hashPassword(pw));
+    Astro.cookies.set(SESSION_COOKIE, createSession(), cookieOptions);
+    return Astro.redirect("/studio");
+  }
+}
+---
+
+<Studio title="set up access · dhosae" chrome={false}>
+  <div class="gate">
+    <div class="s-card">
+      <p class="eyebrow" style="color:var(--violet-ink)">create your access</p>
+      <h1 class="s-h" style="margin-top:0.5rem;">This space is yours alone.</h1>
+      <p class="s-sub">
+        Set a password. It's the only key to the studio — where you write your
+        pieces, your headings, and the "why I do it this way". Choose something
+        only you know; there's no recovery, so keep it safe.
+      </p>
+
+      <form method="POST">
+        <label class="field">
+          <span class="field__label">Password <span class="field__hint">— 8+ characters</span></span>
+          <input class="input" type="password" name="password" required minlength="8" autocomplete="new-password" autofocus />
+        </label>
+        <label class="field">
+          <span class="field__label">Confirm password</span>
+          <input class="input" type="password" name="confirm" required minlength="8" autocomplete="new-password" />
+        </label>
+        {error && <p class="s-note">{error}</p>}
+        <div class="actions">
+          <button type="submit" class="btn btn--violet">Create access →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Studio>
+
+<style>
+  .gate { max-width: 30rem; margin: clamp(2rem, 6vh, 6rem) auto 0; }
+</style>

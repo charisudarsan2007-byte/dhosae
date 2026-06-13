@@ -1,0 +1,72 @@
+---
+import type { Post } from "../../lib/db";
+
+interface Props {
+  post?: Partial<Post>;
+  action: string;
+  submitLabel: string;
+  showDelete?: boolean;
+  originalSlug?: string;
+}
+const { post = {}, action, submitLabel, showDelete = false, originalSlug } = Astro.props;
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<form method="POST" action={action} class="pform">
+  {originalSlug !== undefined && <input type="hidden" name="originalSlug" value={originalSlug} />}
+
+  <label class="field">
+    <span class="field__label">Heading <span class="field__hint">— the title of the piece</span></span>
+    <input class="input" type="text" name="title" value={post.title ?? ""} required maxlength="160"
+      placeholder="The thing on my mind" />
+  </label>
+
+  <label class="field">
+    <span class="field__label">Standfirst <span class="field__hint">— one line, shown on hover on the homepage</span></span>
+    <textarea class="textarea" name="dek" rows="2" maxlength="400"
+      placeholder="A single sentence that hints, without giving the topic away.">{post.dek ?? ""}</textarea>
+  </label>
+
+  <div class="row row--3" style="margin-top:1.4rem;">
+    <label class="field" style="margin-top:0;">
+      <span class="field__label">Date</span>
+      <input class="input" type="date" name="publishedAt" value={post.publishedAt ?? today} required />
+    </label>
+    <label class="field" style="margin-top:0;">
+      <span class="field__label">Read time <span class="field__hint">min</span></span>
+      <input class="input" type="number" name="readingMinutes" min="1" max="120"
+        value={post.readingMinutes ?? ""} placeholder="7" />
+    </label>
+    <label class="field" style="margin-top:0;">
+      <span class="field__label">URL slug <span class="field__hint">— blank = from heading</span></span>
+      <input class="input mono" type="text" name="slug" value={post.slug ?? ""}
+        pattern="[a-z0-9-]*" placeholder="auto" />
+    </label>
+  </div>
+
+  <label class="field">
+    <span class="field__label">Body <span class="field__hint">— Markdown: ## heading, **bold**, *italic*, - list</span></span>
+    <textarea class="textarea textarea--body" name="body"
+      placeholder="Write the piece here…">{post.body ?? ""}</textarea>
+  </label>
+
+  <div class="actions">
+    <label class="check"><input type="checkbox" name="featured" checked={post.featured ?? false} /> Feature as the way-in</label>
+    <label class="check"><input type="checkbox" name="draft" checked={post.draft ?? false} /> Draft (hidden from the site)</label>
+  </div>
+
+  <div class="actions">
+    <button type="submit" class="btn btn--violet">{submitLabel}</button>
+    <a href="/studio" class="btn btn--ghost">Cancel</a>
+    <span class="spacer"></span>
+    {showDelete && (
+      <button type="submit" name="_action" value="delete" class="btn btn--ghost s-del"
+        formnovalidate onclick="return confirm('Delete this piece for good?')">Delete</button>
+    )}
+  </div>
+</form>
+
+<style>
+  .s-del { color: var(--red-ink); border-color: #f0cdd0; }
+  .s-del:hover { border-color: var(--red); background: var(--red-wash); }
+</style>

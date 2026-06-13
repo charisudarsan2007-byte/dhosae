@@ -1,0 +1,338 @@
+---
+import Base from "../layouts/Base.astro";
+import HeroArt from "../components/HeroArt.astro";
+import { getPosts, getContentMany } from "../lib/db";
+import { formatDate } from "../lib/format";
+
+const all = await getPosts(); // published only, newest first
+const lead = all.find((p) => p.featured) ?? all[0];
+const rest = lead ? all.filter((p) => p.slug !== lead.slug) : [];
+
+// every emotion known to people — the band scrolls through the full human range
+const emotions = [
+  "joy", "sadness", "anger", "fear", "disgust", "surprise", "trust",
+  "anticipation", "love", "contempt", "pride", "shame", "guilt", "envy",
+  "jealousy", "gratitude", "hope", "despair", "awe", "boredom", "curiosity",
+  "confusion", "contentment", "anxiety", "relief", "embarrassment", "nostalgia",
+  "loneliness", "compassion", "empathy", "serenity", "ecstasy", "grief", "rage",
+  "terror", "amusement", "admiration", "adoration", "calm", "craving",
+  "entrancement", "excitement", "horror", "interest", "romance", "satisfaction",
+  "sympathy", "triumph", "frustration", "irritation", "melancholy", "euphoria",
+  "bliss", "dread", "panic", "worry", "regret", "remorse", "longing", "yearning",
+  "wonder", "optimism", "pessimism", "resentment", "bitterness", "affection",
+  "tenderness", "delight", "glee", "hostility", "apprehension", "distress",
+  "sorrow", "anguish", "elation", "enthusiasm", "zeal", "passion", "apathy",
+  "numbness", "hurt", "betrayal", "vulnerability", "courage", "determination",
+  "doubt", "insecurity", "confidence", "humility", "schadenfreude", "saudade",
+  "wanderlust", "contempt", "disappointment", "pity", "gladness", "fury",
+];
+
+// the "why I do it this way" creed — written by you in /studio/creed
+const c = await getContentMany([
+  "creed_eyebrow",
+  "creed_title",
+  "creed_body1",
+  "creed_body2",
+  "creed_stats",
+]);
+let creedStats: Array<{ n: string; label: string }> = [];
+try {
+  creedStats = c.creed_stats ? JSON.parse(c.creed_stats) : [];
+} catch {
+  creedStats = [];
+}
+const showCreed = c.creed_title.trim() !== "";
+---
+
+<Base>
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="container hero__inner">
+      <div class="hero__text">
+        <p class="eyebrow hero__eyebrow">notes from one mind · subject withheld</p>
+        <h1 class="hero__title">
+          Big brain.<br />
+          <span class="hero__accent">Big stuff</span> only.
+        </h1>
+        <p class="hero__dek">
+          I write about the few things that actually move money, power and the
+          world. I won't tell you which — naming them would spoil it.
+          Read, and you'll see what I see.
+        </p>
+        <p class="hero__sub mono">Everything else? Noise.</p>
+        <a href="#writing" class="hero__enter">
+          <span class="hero__enter-line" aria-hidden="true"></span>
+          <span>go in blind</span>
+        </a>
+      </div>
+
+      <div class="hero__art">
+        <HeroArt />
+      </div>
+    </div>
+
+    <!-- emotions band — the full human range, scrolling -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker__track">
+        {Array.from({ length: 2 }).map(() => (
+          <span class="ticker__group mono">
+            {emotions.map((t) => (<><em>{t}</em><span>·</span></>))}
+          </span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE WRITING (no categories, ever) ============ -->
+  <section class="writing container" id="writing" aria-labelledby="writing-h">
+    <p class="eyebrow writing__eyebrow">what's been on my mind</p>
+
+    {lead ? (
+      <>
+        <!-- the way in -->
+        <a href={`/posts/${lead.slug}`} class="lead" data-reveal>
+          <span class="lead__num mono">↳ start here, or don't</span>
+          <h2 class="lead__title" id="writing-h">{lead.title}</h2>
+          <p class="lead__dek">{lead.dek}</p>
+          <span class="lead__meta mono">
+            <time datetime={new Date(lead.publishedAt).toISOString()}>{formatDate(new Date(lead.publishedAt))}</time>
+            {lead.readingMinutes && <>· {lead.readingMinutes} min</>}
+            <span class="lead__go">open <span class="arrow">→</span></span>
+          </span>
+        </a>
+
+        <!-- everything else: titles + dates only; the topic stays hidden -->
+        <ol class="index">
+          {rest.map((p, i) => (
+            <li class="entry" data-reveal>
+              <a href={`/posts/${p.slug}`} class="entry__link">
+                <span class="entry__num mono">{String(i + 2).padStart(2, "0")}</span>
+                <span class="entry__main">
+                  <span class="entry__title">{p.title}</span>
+                  <span class="entry__reveal">
+                    <span class="entry__dek">{p.dek}</span>
+                  </span>
+                </span>
+                <time class="entry__date mono" datetime={new Date(p.publishedAt).toISOString()}>
+                  {formatDate(new Date(p.publishedAt))}
+                </time>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </>
+    ) : (
+      <p class="lead__dek" id="writing-h">Nothing published yet. The first piece is being written.</p>
+    )}
+  </section>
+
+  <!-- ============ THE CREED (ink band, first person — written in /studio) ============ -->
+  {showCreed && (
+    <section class="creed" aria-labelledby="creed-h">
+      <div class="container creed__inner">
+        {c.creed_eyebrow.trim() !== "" && (
+          <p class="eyebrow creed__eyebrow">{c.creed_eyebrow}</p>
+        )}
+        <h2 class="creed__title" id="creed-h" data-reveal set:text={c.creed_title} />
+        {(c.creed_body1.trim() !== "" || c.creed_body2.trim() !== "") && (
+          <div class="creed__cols">
+            {c.creed_body1.trim() !== "" && <p data-reveal set:text={c.creed_body1} />}
+            {c.creed_body2.trim() !== "" && <p data-reveal set:text={c.creed_body2} />}
+          </div>
+        )}
+        {creedStats.length > 0 && (
+          <ul class="creed__stats" data-reveal>
+            {creedStats.map((s) => (
+              <li class="cstat">
+                <span class="cstat__n mono">{s.n}</span>
+                <span class="cstat__l">{s.label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  /* ---------- HERO ---------- */
+  .hero { padding-top: clamp(2.5rem, 1rem + 6vw, 6rem); }
+  .hero__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+  .hero__eyebrow { margin-bottom: var(--space-md); }
+  .hero__title {
+    font-size: var(--step-6);
+    font-weight: 560;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .hero__accent { font-style: italic; color: var(--violet); font-weight: 520; }
+  .hero__dek {
+    margin-top: var(--space-md);
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 42ch;
+  }
+  .hero__sub {
+    margin-top: var(--space-sm);
+    color: var(--violet-ink);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .hero__enter {
+    margin-top: var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .hero__enter-line {
+    width: 2.4rem;
+    height: 1px;
+    background: var(--ink);
+    transition: width 380ms var(--ease), background-color 380ms var(--ease);
+  }
+  .hero__enter:hover { color: var(--violet-ink); }
+  .hero__enter:hover .hero__enter-line { width: 4rem; background: var(--violet); }
+
+  .hero__art { aspect-ratio: 1 / 1; max-width: 540px; width: 100%; margin-inline: auto; }
+
+  @media (min-width: 940px) {
+    .hero__inner { grid-template-columns: 1.05fr 0.95fr; }
+    .hero__art { margin-inline: 0; }
+  }
+
+  /* ---------- TICKER ---------- */
+  .ticker {
+    margin-top: var(--space-xl);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+    background: var(--paper-2);
+  }
+  .ticker__track { display: flex; width: max-content; animation: ticker 120s linear infinite; }
+  .ticker__group {
+    display: inline-flex; align-items: center; gap: 1.4rem;
+    padding: 0.9rem 1.4rem 0.9rem 0; font-size: 0.92rem; white-space: nowrap;
+  }
+  .ticker__group em { font-style: normal; color: var(--ink); font-weight: 600; }
+  .ticker__group em:nth-child(7n+9) { color: var(--violet-ink); }
+  .ticker__group span { color: var(--ink-4); }
+  @keyframes ticker { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker__track { animation: none; } }
+
+  /* ---------- THE WRITING ---------- */
+  .writing { margin-top: var(--space-2xl); }
+  .writing__eyebrow { margin-bottom: var(--space-lg); }
+
+  /* the lead / way-in */
+  .lead { display: block; padding-bottom: var(--space-xl); border-bottom: 2px solid var(--ink); }
+  .lead__num { font-size: var(--step--1); color: var(--violet-ink); }
+  .lead__title {
+    margin-top: var(--space-sm);
+    font-size: var(--step-5);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    max-width: 20ch;
+    transition: color 240ms var(--ease);
+  }
+  .lead:hover .lead__title { color: var(--violet-ink); }
+  .lead__dek {
+    margin-top: var(--space-md);
+    font-family: var(--font-display);
+    font-weight: 380;
+    font-size: var(--step-2);
+    line-height: 1.35;
+    color: var(--ink-2);
+    max-width: 32ch;
+  }
+  .lead__meta {
+    margin-top: var(--space-md);
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: var(--step--1); color: var(--ink-3);
+  }
+  .lead__go { color: var(--ink); font-weight: 600; margin-left: 0.4rem; }
+  .lead__go .arrow { display: inline-block; transition: transform 240ms var(--ease); }
+  .lead:hover .lead__go .arrow { transform: translateX(5px); }
+
+  /* the index — titles + dates, topic withheld */
+  .index { list-style: none; margin: 0; padding: 0; }
+  .entry { border-bottom: 1px solid var(--line); }
+  .entry__link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: clamp(0.8rem, 0.3rem + 2vw, 2.4rem);
+    padding: clamp(1.1rem, 0.7rem + 1.4vw, 2rem) 0;
+  }
+  .entry__num { color: var(--ink-4); font-size: 0.82rem; }
+  .entry__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    color: var(--ink);
+    transition: color 220ms var(--ease), transform 360ms var(--ease);
+    display: inline-block;
+  }
+  /* dek hidden by default; revealed on hover/focus only */
+  .entry__reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 420ms var(--ease), opacity 320ms var(--ease);
+    opacity: 0;
+  }
+  .entry__dek {
+    overflow: hidden;
+    min-height: 0;
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--ink-3);
+    font-size: var(--step-0);
+    max-width: 56ch;
+  }
+  .entry__link:hover .entry__reveal,
+  .entry__link:focus-visible .entry__reveal { grid-template-rows: 1fr; opacity: 1; }
+  .entry__link:hover .entry__title,
+  .entry__link:focus-visible .entry__title { color: var(--violet-ink); transform: translateX(6px); }
+  .entry__date { color: var(--ink-3); font-size: var(--step--1); white-space: nowrap; }
+
+  @media (max-width: 540px) {
+    .entry__link { grid-template-columns: auto 1fr; }
+    .entry__date { grid-column: 2; }
+  }
+
+  /* ---------- THE CREED ---------- */
+  .creed { margin-top: var(--space-2xl); background: var(--ink); color: var(--paper); padding-block: var(--space-2xl); }
+  .creed__eyebrow { color: var(--violet); margin-bottom: var(--space-md); }
+  .creed__title { font-size: var(--step-4); letter-spacing: -0.03em; max-width: 20ch; line-height: 1.02; }
+  .creed__cols {
+    margin-top: var(--space-xl);
+    display: grid; gap: var(--space-lg); grid-template-columns: 1fr; max-width: 70ch;
+  }
+  .creed__cols p { color: #cfcfd6; font-size: var(--step-1); line-height: 1.55; }
+  .creed__stats {
+    list-style: none; padding: 0; margin-top: var(--space-2xl);
+    display: grid; grid-template-columns: 1fr; gap: var(--space-lg);
+    border-top: 1px solid rgba(255,255,255,0.16); padding-top: var(--space-xl);
+  }
+  .cstat { display: flex; flex-direction: column; gap: 0.4rem; }
+  .cstat__n { font-size: var(--step-5); line-height: 1; color: #fff; font-weight: 500; letter-spacing: -0.02em; }
+  .cstat__l { color: var(--ink-4); font-size: var(--step--1); max-width: 22ch; }
+
+  @media (min-width: 720px) {
+    .creed__cols { grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
+    .creed__stats { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>

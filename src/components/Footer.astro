@@ -1,0 +1,60 @@
+---
+import Wordmark from "./Wordmark.astro";
+const year = new Date().getFullYear();
+---
+
+<footer class="foot">
+  <div class="container foot__inner">
+    <p class="foot__statement" data-reveal>
+      No newsletter. No feed. No follow button.<br />
+      If it mattered to you, you'll come back on your own.
+    </p>
+
+    <div class="foot__base">
+      <Wordmark size="sm" href="/" />
+      <p class="mono foot__meta">© {year} · written by one mind · unorthodox on purpose</p>
+      <a href="/studio" class="mono foot__studio" rel="nofollow">
+        <span class="foot__lock" aria-hidden="true">⊚</span> studio
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    border-top: 1px solid var(--line);
+    margin-top: var(--space-2xl);
+    padding-block: var(--space-2xl) var(--space-lg);
+    background: var(--paper-2);
+  }
+  .foot__statement {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    max-width: 22ch;
+    color: var(--ink);
+  }
+  .foot__base {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  .foot__meta { font-size: var(--step--1); color: var(--ink-3); }
+  .foot__studio {
+    font-size: var(--step--1);
+    color: var(--ink-4);
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    transition: color 200ms var(--ease);
+  }
+  .foot__studio:hover { color: var(--violet-ink); }
+  .foot__lock { color: var(--violet); font-size: 0.95em; }
+</style>

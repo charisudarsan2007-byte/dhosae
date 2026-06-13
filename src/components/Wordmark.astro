@@ -1,0 +1,63 @@
+---
+/**
+ * Wordmark — dhosae.
+ * The mark: "the loop that won't close" — a single one-stroke ring that
+ * refuses to close and overshoots itself. No frame. No arrow. The form
+ * is the idea: a thing that won't be contained.
+ */
+interface Props {
+  size?: "sm" | "md" | "lg";
+  href?: string | null;
+}
+const { size = "md", href = "/" } = Astro.props;
+const Tag = href ? "a" : "div";
+const props = href ? { href, "aria-label": "dhosae — home" } : {};
+---
+
+<Tag class:list={["wordmark", `wordmark--${size}`]} {...props}>
+  <span class="wordmark__mark" aria-hidden="true">
+    <svg viewBox="0 0 34 34" fill="none">
+      <path
+        d="M16 28.5 A11 11 0 1 1 24.8 9.2 Q29 5.4 31.5 2.5"
+        stroke="#6322e8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </span>
+  <span class="wordmark__text">dhosae</span>
+</Tag>
+
+<style>
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .wordmark__mark {
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .wordmark__mark svg {
+    width: 1.5em;
+    height: 1.5em;
+    overflow: visible;
+  }
+  .wordmark__mark path {
+    transition: stroke 240ms var(--ease), transform 600ms var(--ease);
+    transform-box: fill-box;
+    transform-origin: 50% 60%;
+  }
+  .wordmark__text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    font-size: 1.4em;
+  }
+
+  .wordmark--sm { font-size: 1rem; }
+  .wordmark--md { font-size: 1.25rem; }
+  .wordmark--lg { font-size: 1.75rem; }
+
+  .wordmark:hover .wordmark__mark path { transform: rotate(-8deg); }
+</style>

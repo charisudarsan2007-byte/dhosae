@@ -1,0 +1,92 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getPost } from "../../lib/db";
+import { formatDate } from "../../lib/format";
+import { marked } from "marked";
+
+const slug = Astro.params.slug!;
+const post = await getPost(slug);
+if (!post || post.draft) {
+  return new Response("Not found", { status: 404 });
+}
+
+marked.setOptions({ gfm: true, breaks: false });
+const html = await marked.parse(post.body);
+const published = new Date(post.publishedAt);
+---
+
+<Base title={`${post.title} · dhosae`} description={post.dek}>
+  <article class="piece container">
+    <a href="/#writing" class="piece__back mono">← back</a>
+
+    <header class="piece__head">
+      <p class="piece__kicker mono">a piece · subject is in the reading</p>
+      <h1 class="piece__title">{post.title}</h1>
+      {post.dek && <p class="piece__dek">{post.dek}</p>}
+      <p class="piece__meta mono">
+        <time datetime={published.toISOString()}>{formatDate(published)}</time>
+        {post.readingMinutes && <> · {post.readingMinutes} min</>}
+      </p>
+    </header>
+
+    <div class="prose" set:html={html} />
+
+    <footer class="piece__foot">
+      <span class="piece__rule" aria-hidden="true"></span>
+      <a href="/#writing" class="link">Read another →</a>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .piece { max-width: 50rem; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
+  .piece__back { color: var(--ink-3); font-size: var(--step--1); display: inline-block; }
+  .piece__back:hover { color: var(--violet-ink); }
+
+  .piece__head { margin-top: var(--space-lg); padding-bottom: var(--space-lg); border-bottom: 1px solid var(--line); }
+  .piece__kicker { color: var(--violet-ink); font-size: var(--step--1); }
+  .piece__title {
+    margin-top: var(--space-sm);
+    font-size: var(--step-5); line-height: 1.0; letter-spacing: -0.03em; max-width: 22ch;
+  }
+  .piece__dek {
+    margin-top: var(--space-md);
+    font-family: var(--font-display); font-weight: 380; font-size: var(--step-2);
+    line-height: 1.35; color: var(--ink-2); max-width: 40ch;
+  }
+  .piece__meta { margin-top: var(--space-md); color: var(--ink-3); font-size: var(--step--1); }
+
+  /* prose */
+  .prose { margin-top: var(--space-xl); max-width: var(--measure); font-size: var(--step-1); line-height: 1.7; color: var(--ink); }
+  .prose :global(p) { margin-top: 1.4em; }
+  .prose :global(p:first-child) { margin-top: 0; }
+  .prose :global(h2) {
+    margin-top: 2.2em; font-size: var(--step-2); letter-spacing: -0.02em;
+  }
+  .prose :global(h3) { margin-top: 1.8em; font-size: var(--step-1); }
+  .prose :global(strong) { font-weight: 650; }
+  .prose :global(em) { font-style: italic; }
+  .prose :global(a) {
+    color: var(--violet-ink);
+    text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px;
+  }
+  .prose :global(ul), .prose :global(ol) { margin-top: 1.3em; padding-left: 1.3em; }
+  .prose :global(li) { margin-top: 0.5em; }
+  .prose :global(li::marker) { color: var(--violet); }
+  .prose :global(blockquote) {
+    margin-top: 1.5em; padding-left: 1.1em; border-left: 3px solid var(--violet);
+    color: var(--ink-2); font-style: italic;
+  }
+  .prose :global(code) {
+    font-family: var(--font-mono); font-size: 0.88em;
+    background: var(--paper-3); padding: 0.12em 0.36em; border-radius: 4px;
+  }
+  .prose :global(hr) { margin: 2.2em 0; border: 0; border-top: 1px solid var(--line); }
+
+  .piece__foot { margin-top: var(--space-2xl); }
+  .piece__rule { display: block; height: 2px; background: var(--ink); width: 3rem; margin-bottom: var(--space-md); }
+
+  @media (min-width: 720px) {
+    .piece__title { font-size: clamp(3rem, 2rem + 4vw, 5rem); }
+  }
+</style>

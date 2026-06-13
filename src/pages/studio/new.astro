@@ -1,0 +1,43 @@
+---
+import Studio from "../../layouts/Studio.astro";
+import PostForm from "../../components/studio/PostForm.astro";
+import { getPost, upsertPost, slugify, type Post } from "../../lib/db";
+
+let error = "";
+let draft: Partial<Post> = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const title = String(form.get("title") ?? "").trim();
+  let slug = String(form.get("slug") ?? "").trim();
+  if (!slug) slug = slugify(title);
+  const dek = String(form.get("dek") ?? "").trim();
+  const body = String(form.get("body") ?? "");
+  const publishedAt = String(form.get("publishedAt") ?? "").trim() || new Date().toISOString().slice(0, 10);
+  const rm = String(form.get("readingMinutes") ?? "").trim();
+  const readingMinutes = rm ? Number(rm) : null;
+  const featured = form.get("featured") != null;
+  const draftFlag = form.get("draft") != null;
+
+  draft = { title, slug, dek, body, publishedAt, readingMinutes, featured, draft: draftFlag };
+
+  if (!title) error = "A heading is required.";
+  else if (!slug) error = "Could not build a URL from that heading — type a slug.";
+  else if (await getPost(slug)) error = `The slug "${slug}" is already in use. Pick another.`;
+  else {
+    await upsertPost({ slug, title, dek, body, publishedAt, readingMinutes, featured, draft: draftFlag });
+    return Astro.redirect("/studio");
+  }
+}
+---
+
+<Studio title="new piece · studio">
+  <header style="margin-bottom:1.4rem;">
+    <p class="eyebrow" style="color:var(--violet-ink)">new piece</p>
+    <h1 class="s-h" style="font-size:var(--step-4);">Write something big.</h1>
+  </header>
+  <div class="s-card">
+    {error && <p class="s-note">{error}</p>}
+    <PostForm post={draft} action="/studio/new" submitLabel="Save piece" />
+  </div>
+</Studio>

@@ -1,0 +1,58 @@
+---
+import Studio from "../../layouts/Studio.astro";
+import PostForm from "../../components/studio/PostForm.astro";
+import { getPost, upsertPost, deletePost, slugify, type Post } from "../../lib/db";
+
+const slug = Astro.params.slug!;
+let existing = await getPost(slug);
+if (!existing) return new Response("Not found", { status: 404 });
+
+let error = "";
+let view: Partial<Post> = existing;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+
+  if (form.get("_action") === "delete") {
+    await deletePost(slug);
+    return Astro.redirect("/studio");
+  }
+
+  const title = String(form.get("title") ?? "").trim();
+  let newSlug = String(form.get("slug") ?? "").trim();
+  if (!newSlug) newSlug = slugify(title);
+  const dek = String(form.get("dek") ?? "").trim();
+  const body = String(form.get("body") ?? "");
+  const publishedAt = String(form.get("publishedAt") ?? "").trim() || existing.publishedAt;
+  const rm = String(form.get("readingMinutes") ?? "").trim();
+  const readingMinutes = rm ? Number(rm) : null;
+  const featured = form.get("featured") != null;
+  const draftFlag = form.get("draft") != null;
+
+  view = { title, slug: newSlug, dek, body, publishedAt, readingMinutes, featured, draft: draftFlag };
+
+  if (!title) error = "A heading is required.";
+  else if (!newSlug) error = "Could not build a URL from that heading — type a slug.";
+  else if (newSlug !== slug && (await getPost(newSlug))) error = `The slug "${newSlug}" is already in use.`;
+  else {
+    await upsertPost({ slug: newSlug, title, dek, body, publishedAt, readingMinutes, featured, draft: draftFlag }, slug);
+    return Astro.redirect("/studio");
+  }
+}
+---
+
+<Studio title={`edit · ${existing.title}`}>
+  <header style="margin-bottom:1.4rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+    <div>
+      <p class="eyebrow" style="color:var(--violet-ink)">editing</p>
+      <h1 class="s-h" style="font-size:var(--step-3);">{existing.title}</h1>
+    </div>
+    {!existing.draft && (
+      <a href={`/posts/${existing.slug}`} target="_blank" rel="noreferrer" class="btn btn--ghost">View live ↗</a>
+    )}
+  </header>
+  <div class="s-card">
+    {error && <p class="s-note">{error}</p>}
+    <PostForm post={view} action={`/studio/${slug}`} submitLabel="Save changes" showDelete originalSlug={slug} />
+  </div>
+</Studio>

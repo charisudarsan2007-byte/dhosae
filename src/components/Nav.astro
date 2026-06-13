@@ -1,0 +1,36 @@
+---
+import Wordmark from "./Wordmark.astro";
+---
+
+<header class="nav">
+  <div class="container nav__inner">
+    <Wordmark size="md" href="/" />
+    <span class="nav__mark mono" aria-hidden="true">no index · no map</span>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--paper) 80%, transparent);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    height: 68px;
+  }
+  .nav__mark {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+  @media (max-width: 560px) { .nav__mark { display: none; } }
+</style>

@@ -1,0 +1,40 @@
+---
+import Studio from "../../layouts/Studio.astro";
+import { checkLogin } from "../../lib/auth";
+import { createSession, SESSION_COOKIE, cookieOptions } from "../../lib/auth";
+
+let error = "";
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const pw = String(form.get("password") ?? "");
+  if (await checkLogin(pw)) {
+    Astro.cookies.set(SESSION_COOKIE, createSession(), cookieOptions);
+    return Astro.redirect("/studio");
+  }
+  error = "Wrong password.";
+}
+---
+
+<Studio title="access · dhosae" chrome={false}>
+  <div class="gate">
+    <div class="s-card">
+      <p class="eyebrow" style="color:var(--violet-ink)">access</p>
+      <h1 class="s-h" style="margin-top:0.5rem;">Welcome back.</h1>
+      <p class="s-sub">Enter your password to open the studio.</p>
+      <form method="POST">
+        <label class="field">
+          <span class="field__label">Password</span>
+          <input class="input" type="password" name="password" required autocomplete="current-password" autofocus />
+        </label>
+        {error && <p class="s-note">{error}</p>}
+        <div class="actions">
+          <button type="submit" class="btn btn--violet">Unlock →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Studio>
+
+<style>
+  .gate { max-width: 28rem; margin: clamp(2rem, 6vh, 6rem) auto 0; }
+</style>
