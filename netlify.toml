@@ -1,0 +1,11 @@
+# dhosae.in — Netlify build config
+# The Astro Netlify adapter (enabled automatically when NETLIFY is set, see
+# astro.config.mjs) turns the server-rendered site into a Netlify Function and
+# wires up the publish directory. We only need to tell Netlify how to build.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

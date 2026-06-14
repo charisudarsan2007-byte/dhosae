@@ -1,5 +1,6 @@
 ---
 import type { Post } from "../../lib/db";
+import { toLocalInput } from "../../lib/format";
 
 interface Props {
   post?: Partial<Post>;
@@ -9,50 +10,45 @@ interface Props {
   originalSlug?: string;
 }
 const { post = {}, action, submitLabel, showDelete = false, originalSlug } = Astro.props;
-const today = new Date().toISOString().slice(0, 10);
+// datetime-local wants "YYYY-MM-DDTHH:MM" in IST wall-clock.
+const whenValue = post.publishedAt ? toLocalInput(post.publishedAt) : toLocalInput(new Date().toISOString());
 ---
 
 <form method="POST" action={action} class="pform">
   {originalSlug !== undefined && <input type="hidden" name="originalSlug" value={originalSlug} />}
 
   <label class="field">
-    <span class="field__label">Heading <span class="field__hint">— the title of the piece</span></span>
+    <span class="field__label">Title <span class="field__hint">— what today was</span></span>
     <input class="input" type="text" name="title" value={post.title ?? ""} required maxlength="160"
-      placeholder="The thing on my mind" />
+      placeholder="A title for today" autofocus />
   </label>
 
   <label class="field">
-    <span class="field__label">Standfirst <span class="field__hint">— one line, shown on hover on the homepage</span></span>
+    <span class="field__label">A line beneath it <span class="field__hint">— optional; shown under the title</span></span>
     <textarea class="textarea" name="dek" rows="2" maxlength="400"
-      placeholder="A single sentence that hints, without giving the topic away.">{post.dek ?? ""}</textarea>
+      placeholder="One quiet line, if you want one.">{post.dek ?? ""}</textarea>
   </label>
 
-  <div class="row row--3" style="margin-top:1.4rem;">
+  <div class="row row--2" style="margin-top:1.4rem;">
     <label class="field" style="margin-top:0;">
-      <span class="field__label">Date</span>
-      <input class="input" type="date" name="publishedAt" value={post.publishedAt ?? today} required />
+      <span class="field__label">Date &amp; time <span class="field__hint">— filled in for now, change it if you like</span></span>
+      <input class="input mono" type="datetime-local" name="publishedAt" value={whenValue} required />
     </label>
     <label class="field" style="margin-top:0;">
-      <span class="field__label">Read time <span class="field__hint">min</span></span>
-      <input class="input" type="number" name="readingMinutes" min="1" max="120"
-        value={post.readingMinutes ?? ""} placeholder="7" />
-    </label>
-    <label class="field" style="margin-top:0;">
-      <span class="field__label">URL slug <span class="field__hint">— blank = from heading</span></span>
+      <span class="field__label">Link <span class="field__hint">— blank = from the title</span></span>
       <input class="input mono" type="text" name="slug" value={post.slug ?? ""}
         pattern="[a-z0-9-]*" placeholder="auto" />
     </label>
   </div>
 
   <label class="field">
-    <span class="field__label">Body <span class="field__hint">— Markdown: ## heading, **bold**, *italic*, - list</span></span>
+    <span class="field__label">The day <span class="field__hint">— Markdown: ## heading, **bold**, *italic*, &gt; quote, - list</span></span>
     <textarea class="textarea textarea--body" name="body"
-      placeholder="Write the piece here…">{post.body ?? ""}</textarea>
+      placeholder="Write the day here. As long or as short as it was…">{post.body ?? ""}</textarea>
   </label>
 
   <div class="actions">
-    <label class="check"><input type="checkbox" name="featured" checked={post.featured ?? false} /> Feature as the way-in</label>
-    <label class="check"><input type="checkbox" name="draft" checked={post.draft ?? false} /> Draft (hidden from the site)</label>
+    <label class="check"><input type="checkbox" name="draft" checked={post.draft ?? false} /> Keep as a draft — not shown on the site yet</label>
   </div>
 
   <div class="actions">
@@ -61,7 +57,7 @@ const today = new Date().toISOString().slice(0, 10);
     <span class="spacer"></span>
     {showDelete && (
       <button type="submit" name="_action" value="delete" class="btn btn--ghost s-del"
-        formnovalidate onclick="return confirm('Delete this piece for good?')">Delete</button>
+        formnovalidate onclick="return confirm('Delete this day for good?')">Delete</button>
     )}
   </div>
 </form>

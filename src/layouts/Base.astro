@@ -8,8 +8,8 @@ interface Props {
   description?: string;
 }
 const {
-  title = "dhosae — big brain, big stuff only",
-  description = "An opinionated publication on finance, economics, startups and business. Big brain. Big stuff only.",
+  title = "dhosae — live each day as if it were your last",
+  description = "A personal journal kept one day at a time. Each entry is a single day, written as if it might be the last one.",
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://dhosae.in");
 ---
@@ -22,7 +22,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://dhosae.in")
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#fbfaf6" />
     <link rel="canonical" href={canonical.href} />
 
     <meta property="og:type" content="website" />

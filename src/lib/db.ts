@@ -68,10 +68,16 @@ export interface Post {
   title: string;
   dek: string;
   body: string;
-  publishedAt: string; // YYYY-MM-DD
+  publishedAt: string; // ISO instant, e.g. 2026-06-14T04:11:00.000Z
   readingMinutes: number | null;
   featured: boolean;
   draft: boolean;
+}
+
+/** Reading time from the body, the honest way: words ÷ 200, at least a minute. */
+export function readingMinutesFor(body: string): number {
+  const words = body.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
 }
 
 function rowToPost(r: Record<string, unknown>): Post {
@@ -119,6 +125,9 @@ export async function upsertPost(
     await db.execute({ sql: `DELETE FROM posts WHERE slug = ?`, args: [originalSlug] });
   }
 
+  // Reading time is never hand-typed — it's a fact about the body.
+  const readingMinutes = readingMinutesFor(p.body);
+
   await db.execute({
     sql: `INSERT INTO posts (slug, title, dek, body, published_at, reading_minutes, featured, draft, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -132,7 +141,7 @@ export async function upsertPost(
       p.dek,
       p.body,
       p.publishedAt,
-      p.readingMinutes,
+      readingMinutes,
       p.featured ? 1 : 0,
       p.draft ? 1 : 0,
       now,
@@ -216,9 +225,10 @@ export async function setAdminHash(hash: string): Promise<void> {
 }
 
 // ---- seed -------------------------------------------------------------------
-// The five launch pieces, so the site is never empty. You can edit or delete
-// any of them from the studio. The creed is intentionally NOT seeded — you
-// write "why I do it this way" yourself.
+// One opening entry, in the journal's own quiet voice, so the place is never
+// empty on the first morning. Delete it from the studio whenever you like; it
+// won't come back. The standing note is intentionally NOT seeded — you write
+// that yourself.
 
 async function seedPosts(db: Client): Promise<void> {
   const existing = await db.execute(`SELECT COUNT(*) AS n FROM posts`);
@@ -253,92 +263,21 @@ const SEED: Array<{
   body: string;
 }> = [
   {
-    slug: "the-only-numbers-that-matter",
-    title: "The only three numbers that actually move a business",
-    dek: "Revenue is vanity, profit is sanity, but cash flow is the one that pays rent. A field guide to ignoring the other forty metrics on your dashboard.",
-    publishedAt: "2026-06-09",
-    readingMinutes: 7,
-    featured: true,
-    body: `Most dashboards are decorated panic. Forty tiles, twelve colours, and not one of them tells you whether the business survives the next quarter.
-
-Strip it back. Three numbers carry the weight.
-
-## 1. Cash runway
-
-Not revenue. Not bookings. The number of months before the bank balance hits zero at the current burn. Everything else is a story you tell investors; runway is the story physics tells you.
-
-## 2. Contribution margin
-
-What's left from one more sale after the costs that *only* exist because you made that sale. If this is negative, growth is a way to lose money faster — and you'd be amazed how many "rocket ships" are exactly that.
-
-## 3. The payback period
-
-How long until a customer returns the cash you spent to acquire them. Under twelve months and you can press the accelerator. Over twenty-four and you're financing strangers' habits with your own equity.
-
-Everything else — DAUs, NPS, "engagement" — is downstream of these or it's noise. Big brain, big stuff. The rest is decoration.`,
-  },
-  {
-    slug: "inflation-is-a-story",
-    title: "Inflation is a story the economy tells itself",
-    dek: "Prices don't rise because of one villain. They rise because millions of people start believing they will — and then act on it. Expectations are the real engine.",
-    publishedAt: "2026-05-28",
-    readingMinutes: 9,
+    slug: "why-im-keeping-this",
+    title: "Why I'm keeping this",
+    dek: "A note, before the first real day.",
+    // A fixed instant near the morning the place went up (IST ~6:10am).
+    publishedAt: "2026-06-14T00:40:00.000Z",
+    readingMinutes: 2,
     featured: false,
-    body: `Ask ten people why prices go up and you'll get ten villains: money printing, greedy corporations, oil, wages, the government. Each is real on some Tuesday. None is the whole machine.
+    body: `In 2005, standing in front of a few thousand graduates, Steve Jobs said that for the past thirty-three years he had looked in the mirror every morning and asked himself one question: *if today were the last day of my life, would I want to do what I am about to do today?* Whenever the answer had been "no" for too many days in a row, he knew he needed to change something.
 
-The machine is **expectations**.
+This is my version of that mirror.
 
-When enough people believe prices will be higher next year, they behave as if they already are. Workers ask for more. Firms raise prices pre-emptively. Lenders demand fatter rates. The belief manufactures the outcome — a prophecy that funds itself.
+Every entry here is one day, written as if it might be the last one. Not to be morbid — the opposite. Remembering that the time runs out is the fastest way I know to clear off the noise: the fear of looking foolish, the small vanities, the endless someday-laters. What's left after that is usually the only thing worth doing.
 
-This is why central banks spend most of their energy not on interest rates but on *credibility*. The rate is the lever; the belief is the gearbox. A central bank that is trusted barely has to move. One that isn't can hike into a wall and watch prices keep climbing.
+So this won't be polished. Some days will be a single line, written late, half-awake. That's allowed. I would rather keep honest days than impressive ones.
 
-So when you read the next inflation print, don't just ask *what happened to prices*. Ask the bigger question: **what does everyone now expect to happen next?** That's the number that hasn't been published yet — and it's the one that matters.`,
-  },
-  {
-    slug: "moats-are-mostly-myth",
-    title: "Most 'moats' are just a head start with good PR",
-    dek: "Network effects, brand, switching costs — the canon of defensibility. Useful, until founders mistake a temporary lead for a permanent wall.",
-    publishedAt: "2026-05-15",
-    readingMinutes: 6,
-    featured: false,
-    body: `Every pitch deck has a slide titled "Why we win." It lists a moat. It is usually wrong — not because moats don't exist, but because *speed* is wearing their clothes.
-
-A real moat compounds while you sleep. A fake one needs you to keep running.
-
-- **Network effects** are real when each user makes the product better for the next. They're fake when you're just buying both sides of the market.
-- **Brand** is real when customers pay more for the same thing. It's fake when it's only awareness.
-- **Switching costs** are real when leaving genuinely hurts. They're fake when they're just a clunky export button you haven't been forced to fix.
-
-The honest version of the slide says: *we are eighteen months ahead and we intend to use them to build something that's actually hard to copy.* That's not weakness. That's the only strategy that survives contact with a competitor who read the same playbook.`,
-  },
-  {
-    slug: "the-risk-you-cannot-see",
-    title: "The risk you can't see on the spreadsheet",
-    dek: "Correlation hides until the day everything needs it most. Why diversification fails exactly when you're counting on it.",
-    publishedAt: "2026-04-30",
-    readingMinutes: 8,
-    featured: false,
-    body: `Diversification is a promise that your bets won't all fail at once. The fine print: *probably, on a normal day.*
-
-The trouble is that crises are not normal days. In calm markets, assets drift apart and your spreadsheet reports comforting low correlations. Then stress arrives, everyone reaches for cash at the same moment, and correlations snap to one. The diversification you paid for evaporates precisely when you wanted to withdraw it.
-
-This is the risk no column captures: the risk that your *model of risk* is itself a fair-weather friend.
-
-The fix isn't a better correlation matrix. It's humility built into the structure — keep enough dry powder that you never become a forced seller, and size positions so that being wrong is survivable, not just unlikely. The market can stay irrational longer than you can stay solvent, and solvency is the only score that counts at the end.`,
-  },
-  {
-    slug: "compounding-is-boring-on-purpose",
-    title: "Compounding is boring on purpose",
-    dek: "The most powerful force in finance looks like nothing is happening — right up until everything is. A note on patience as a strategy.",
-    publishedAt: "2026-04-12",
-    readingMinutes: 5,
-    featured: false,
-    body: `Compounding has a marketing problem: for most of its life it looks like failure.
-
-A 15% annual return turns ₹1 into ₹4 over a decade and into ₹16 over two. The second decade does *four times* the work of the first, for the same patience. But the first decade is where everyone quits, because the curve is still flat enough to feel like standing still.
-
-The lesson isn't "wait." It's *survive the boring part without doing something clever.* Most damage to long-term returns is self-inflicted — a panic sell, a hot tip, a clever rotation that resets the clock.
-
-Big results come from small edges, held for an unreasonable amount of time. The math is not complicated. The behaviour is the entire game.`,
+If you've found your way here — start with today. The rest will keep.`,
   },
 ];

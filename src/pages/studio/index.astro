@@ -1,40 +1,39 @@
 ---
 import Studio from "../../layouts/Studio.astro";
 import { getPosts, getContent } from "../../lib/db";
-import { formatDate } from "../../lib/format";
+import { formatDate, formatClock } from "../../lib/format";
 
 const posts = await getPosts({ includeDrafts: true });
-const creedTitle = await getContent("creed_title");
+const noteTitle = await getContent("creed_title");
 ---
 
 <Studio title="studio · dhosae">
   <header class="head">
     <div>
       <p class="eyebrow" style="color:var(--violet-ink)">your studio</p>
-      <h1 class="s-h">The writing</h1>
-      <p class="s-sub">Everything here is yours to write, edit, or remove. Nothing is published until you say so.</p>
+      <h1 class="s-h">The days</h1>
+      <p class="s-sub">Every entry is one day. Write it, change it, or take it back. Nothing is shown to anyone until you say so.</p>
     </div>
-    <a href="/studio/new" class="btn btn--violet">＋ New piece</a>
+    <a href="/studio/new" class="btn btn--violet">＋ Write today</a>
   </header>
 
-  {creedTitle.trim() === "" && (
+  {noteTitle.trim() === "" && (
     <a href="/studio/creed" class="nudge">
-      <strong>Write your "why I do it this way".</strong>
-      <span>The creed on your homepage is empty — tell readers, in your own words, why this place exists. →</span>
+      <strong>Write the standing note.</strong>
+      <span>The short note on your homepage is empty — say, in your own words, why this place exists. →</span>
     </a>
   )}
 
   <ol class="plist">
-    {posts.length === 0 && <li class="empty">No pieces yet. Start your first one →</li>}
+    {posts.length === 0 && <li class="empty">No days yet. Write your first one →</li>}
     {posts.map((p) => (
       <li class="prow">
         <a href={`/studio/${p.slug}`} class="prow__link">
           <span class="prow__main">
             <span class="prow__title">{p.title}</span>
             <span class="prow__meta mono">
-              {p.featured && <em class="badge badge--violet">way-in</em>}
               {p.draft && <em class="badge badge--draft">draft</em>}
-              <time>{formatDate(new Date(p.publishedAt))}</time>
+              <time>{formatDate(new Date(p.publishedAt))} · {formatClock(new Date(p.publishedAt))}</time>
               {p.readingMinutes && <span>· {p.readingMinutes} min</span>}
             </span>
           </span>

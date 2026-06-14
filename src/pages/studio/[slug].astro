@@ -2,6 +2,7 @@
 import Studio from "../../layouts/Studio.astro";
 import PostForm from "../../components/studio/PostForm.astro";
 import { getPost, upsertPost, deletePost, slugify, type Post } from "../../lib/db";
+import { fromLocalInput } from "../../lib/format";
 
 const slug = Astro.params.slug!;
 let existing = await getPost(slug);
@@ -23,19 +24,17 @@ if (Astro.request.method === "POST") {
   if (!newSlug) newSlug = slugify(title);
   const dek = String(form.get("dek") ?? "").trim();
   const body = String(form.get("body") ?? "");
-  const publishedAt = String(form.get("publishedAt") ?? "").trim() || existing.publishedAt;
-  const rm = String(form.get("readingMinutes") ?? "").trim();
-  const readingMinutes = rm ? Number(rm) : null;
-  const featured = form.get("featured") != null;
+  const whenRaw = String(form.get("publishedAt") ?? "").trim();
+  const publishedAt = whenRaw ? fromLocalInput(whenRaw) : existing.publishedAt;
   const draftFlag = form.get("draft") != null;
 
-  view = { title, slug: newSlug, dek, body, publishedAt, readingMinutes, featured, draft: draftFlag };
+  view = { title, slug: newSlug, dek, body, publishedAt, readingMinutes: null, featured: false, draft: draftFlag };
 
-  if (!title) error = "A heading is required.";
-  else if (!newSlug) error = "Could not build a URL from that heading — type a slug.";
-  else if (newSlug !== slug && (await getPost(newSlug))) error = `The slug "${newSlug}" is already in use.`;
+  if (!title) error = "A title is needed.";
+  else if (!newSlug) error = "Could not build a link from that title — type one.";
+  else if (newSlug !== slug && (await getPost(newSlug))) error = `The link "${newSlug}" is already in use.`;
   else {
-    await upsertPost({ slug: newSlug, title, dek, body, publishedAt, readingMinutes, featured, draft: draftFlag }, slug);
+    await upsertPost({ slug: newSlug, title, dek, body, publishedAt, readingMinutes: null, featured: false, draft: draftFlag }, slug);
     return Astro.redirect("/studio");
   }
 }

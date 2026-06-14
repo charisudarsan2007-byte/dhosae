@@ -2,44 +2,36 @@
 import Studio from "../../layouts/Studio.astro";
 import { getContentMany, setContent } from "../../lib/db";
 
-const KEYS = ["creed_eyebrow", "creed_title", "creed_body1", "creed_body2", "creed_stats"];
+const KEYS = ["creed_eyebrow", "creed_title", "creed_body1", "creed_body2"];
 let saved = false;
 
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
-  const stats = [0, 1, 2].map((i) => ({
-    n: String(form.get(`stat_n_${i}`) ?? "").trim(),
-    label: String(form.get(`stat_l_${i}`) ?? "").trim(),
-  })).filter((s) => s.n !== "" || s.label !== "");
   await setContent({
     creed_eyebrow: String(form.get("creed_eyebrow") ?? "").trim(),
     creed_title: String(form.get("creed_title") ?? "").trim(),
     creed_body1: String(form.get("creed_body1") ?? "").trim(),
     creed_body2: String(form.get("creed_body2") ?? "").trim(),
-    creed_stats: JSON.stringify(stats),
   });
   saved = true;
 }
 
 const c = await getContentMany(KEYS);
-let stats: Array<{ n: string; label: string }> = [];
-try { stats = c.creed_stats ? JSON.parse(c.creed_stats) : []; } catch { stats = []; }
-while (stats.length < 3) stats.push({ n: "", label: "" });
 ---
 
-<Studio title="why I do it this way · studio">
+<Studio title="the standing note · studio">
   <header style="margin-bottom:1.6rem;">
-    <p class="eyebrow" style="color:var(--violet-ink)">the creed</p>
-    <h1 class="s-h" style="font-size:var(--step-4);">Why I do it this way</h1>
-    <p class="s-sub">This is the black band near the bottom of your homepage. Write it in your own voice. Leave the heading empty to hide the whole band.</p>
+    <p class="eyebrow" style="color:var(--violet-ink)">the standing note</p>
+    <h1 class="s-h" style="font-size:var(--step-4);">Why this place exists</h1>
+    <p class="s-sub">A short note that sits beneath your days on the homepage. Write it in your own voice. Leave the heading empty to hide it altogether.</p>
   </header>
 
   <div class="s-card">
     <form method="POST">
       <label class="field" style="margin-top:0;">
-        <span class="field__label">Eyebrow <span class="field__hint">— small line above the heading</span></span>
+        <span class="field__label">Small line above <span class="field__hint">— optional</span></span>
         <input class="input mono" type="text" name="creed_eyebrow" value={c.creed_eyebrow}
-          placeholder="why I do it this way" maxlength="80" />
+          placeholder="why I keep this" maxlength="80" />
       </label>
 
       <label class="field">
@@ -50,35 +42,21 @@ while (stats.length < 3) stats.push({ n: "", label: "" });
 
       <div class="row row--2" style="margin-top:1.4rem;">
         <label class="field" style="margin-top:0;">
-          <span class="field__label">Left paragraph</span>
+          <span class="field__label">First paragraph</span>
           <textarea class="textarea" name="creed_body1" rows="6" placeholder="Your words…">{c.creed_body1}</textarea>
         </label>
         <label class="field" style="margin-top:0;">
-          <span class="field__label">Right paragraph</span>
+          <span class="field__label">Second paragraph <span class="field__hint">— optional</span></span>
           <textarea class="textarea" name="creed_body2" rows="6" placeholder="Your words…">{c.creed_body2}</textarea>
         </label>
-      </div>
-
-      <p class="field__label" style="margin-top:1.8rem;">Three statements <span class="field__hint">— a big value + a short label each. Leave blank to skip.</span></p>
-      <div class="row row--3">
-        {stats.map((s, i) => (
-          <div class="statbox">
-            <input class="input mono" type="text" name={`stat_n_${i}`} value={s.n} placeholder="01" maxlength="12" />
-            <input class="input" type="text" name={`stat_l_${i}`} value={s.label} placeholder="what it stands for" maxlength="80" />
-          </div>
-        ))}
       </div>
 
       {saved && <p class="s-ok">Saved. Your homepage is updated.</p>}
 
       <div class="actions">
-        <button type="submit" class="btn btn--violet">Save creed</button>
+        <button type="submit" class="btn btn--violet">Save the note</button>
         <a href="/" target="_blank" rel="noreferrer" class="btn btn--ghost">View homepage ↗</a>
       </div>
     </form>
   </div>
 </Studio>
-
-<style>
-  .statbox { display: grid; gap: 0.5rem; }
-</style>

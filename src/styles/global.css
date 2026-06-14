@@ -121,33 +121,6 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
-/* tag chips — colour-coded by desk */
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.28em 0.6em;
-  border-radius: 100px;
-  line-height: 1;
-}
-.tag::before {
-  content: "";
-  width: 0.5em;
-  height: 0.5em;
-  border-radius: 100px;
-  background: currentColor;
-}
-.tag[data-desk="markets"]    { color: var(--green-ink); background: var(--green-wash); }
-.tag[data-desk="economics"]  { color: var(--blue-ink);  background: var(--blue-wash); }
-.tag[data-desk="startups"]   { color: var(--violet-ink);background: var(--violet-wash); }
-.tag[data-desk="risk"]       { color: var(--red-ink);   background: var(--red-wash); }
-.tag[data-desk="ideas"]      { color: var(--ink);       background: var(--paper-3); }
-
 /* buttons */
 .btn {
   --btn-bg: var(--ink);

@@ -6,13 +6,18 @@ const year = new Date().getFullYear();
 <footer class="foot">
   <div class="container foot__inner">
     <p class="foot__statement" data-reveal>
-      No newsletter. No feed. No follow button.<br />
-      If it mattered to you, you'll come back on your own.
+      No feed. No counter. No follow.<br />
+      Come back tomorrow, if there is one.
+    </p>
+
+    <p class="foot__creed mono" data-reveal>
+      “If you live each day as if it was your last, someday you'll most certainly be right.”
+      <span class="foot__attr">— Steve Jobs, Stanford, 2005</span>
     </p>
 
     <div class="foot__base">
       <Wordmark size="sm" href="/" />
-      <p class="mono foot__meta">© {year} · written by one mind · unorthodox on purpose</p>
+      <p class="mono foot__meta">© {year} · dhosae · one day at a time</p>
       <a href="/studio" class="mono foot__studio" rel="nofollow">
         <span class="foot__lock" aria-hidden="true">⊚</span> studio
       </a>
@@ -35,8 +40,17 @@ const year = new Date().getFullYear();
     max-width: 22ch;
     color: var(--ink);
   }
+  .foot__creed {
+    margin-top: var(--space-xl);
+    max-width: 52ch;
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--ink-3);
+  }
+  .foot__attr { display: block; margin-top: 0.5rem; color: var(--ink-4); letter-spacing: 0.04em; }
+
   .foot__base {
-    margin-top: var(--space-2xl);
+    margin-top: var(--space-xl);
     padding-top: var(--space-md);
     border-top: 1px solid var(--line);
     display: flex;

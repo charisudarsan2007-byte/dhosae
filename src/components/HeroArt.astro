@@ -1,10 +1,9 @@
 ---
 /**
- * HeroArt — "The Big Signal"
- * An original, from-scratch SVG composition for dhosae.
- * Concept: contour rings (depth of thought) + a candlestick ledger
- * (markets up/down) + a violet trend line that breaks the frame.
- * Pure vector. No external assets.
+ * HeroArt — "first light".
+ * One horizon, one sun just clearing it. The whole theme in a single line:
+ * a day beginning, and the quiet knowledge that it will end.
+ * Pure vector, no assets. Sits full-width between Today and the days.
  */
 interface Props {
   class?: string;
@@ -12,122 +11,64 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<div class:list={["hero-art", className]} aria-hidden="true">
-  <svg viewBox="0 0 600 600" role="img" preserveAspectRatio="xMidYMid meet">
-    <title>dhosae — the big signal</title>
+<div class:list={["horizon", className]} aria-hidden="true">
+  <svg viewBox="0 0 1200 150" preserveAspectRatio="xMidYMid meet" role="img">
+    <title>first light</title>
     <defs>
-      <filter id="da-glow" x="-30%" y="-30%" width="160%" height="160%">
-        <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#6322e8" flood-opacity="0.22" />
-      </filter>
-      <marker id="da-arrow" viewBox="0 0 10 10" refX="5" refY="5"
-              markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#6322e8" />
-      </marker>
-      <linearGradient id="da-fade" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#6322e8" stop-opacity="0" />
-        <stop offset="1" stop-color="#6322e8" stop-opacity="0.08" />
+      <linearGradient id="hz-line" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#1b1814" stop-opacity="0" />
+        <stop offset="0.5" stop-color="#1b1814" stop-opacity="0.32" />
+        <stop offset="1" stop-color="#1b1814" stop-opacity="0" />
       </linearGradient>
     </defs>
 
-    <!-- contour rings: depth of analysis -->
-    <g class="da-rings" fill="none" stroke="#0b0b0c">
-      <circle cx="64" cy="556" r="150" stroke-opacity="0.10" />
-      <circle cx="64" cy="556" r="224" stroke-opacity="0.085" />
-      <circle cx="64" cy="556" r="300" stroke-opacity="0.07" />
-      <circle cx="64" cy="556" r="380" stroke-opacity="0.055" />
-      <circle cx="64" cy="556" r="464" stroke-opacity="0.04" />
-      <circle cx="64" cy="556" r="552" stroke-opacity="0.03" />
+    <!-- the rays, rising from behind the sun -->
+    <g class="hz-rays" stroke="#6322e8" stroke-width="2" stroke-linecap="round" stroke-opacity="0.55">
+      <line x1="600" y1="118" x2="600" y2="60" />
+      <line x1="600" y1="118" x2="558" y2="72" />
+      <line x1="600" y1="118" x2="642" y2="72" />
+      <line x1="600" y1="118" x2="524" y2="92" />
+      <line x1="600" y1="118" x2="676" y2="92" />
     </g>
 
-    <!-- large orbit: scope / scale -->
-    <circle class="da-orbit" cx="452" cy="196" r="150" fill="none"
-            stroke="#1f54e0" stroke-opacity="0.45" stroke-width="1.4" />
+    <!-- the horizon -->
+    <line x1="0" y1="118" x2="1200" y2="118" stroke="url(#hz-line)" stroke-width="1.5" />
 
-    <!-- ledger baseline + faint gridlines -->
-    <g stroke="#0b0b0c" stroke-opacity="0.10">
-      <line x1="70" y1="200" x2="560" y2="200" />
-      <line x1="70" y1="300" x2="560" y2="300" />
-      <line x1="70" y1="400" x2="560" y2="400" />
-    </g>
-    <line x1="70" y1="500" x2="560" y2="500" stroke="#0b0b0c" stroke-opacity="0.55" stroke-width="1.4" />
-
-    <!-- candlesticks: markets up (green) / down (red) -->
-    <g class="da-candles" stroke-width="2.2" stroke-linecap="round">
-      <!-- c1 down --><line x1="130" y1="462" x2="130" y2="508" stroke="#d12d36"/><rect x="121" y="470" width="18" height="30" fill="#d12d36"/>
-      <!-- c2 up   --><line x1="168" y1="444" x2="168" y2="494" stroke="#0a8f4f"/><rect x="159" y="452" width="18" height="34" fill="#0a8f4f"/>
-      <!-- c3 up   --><line x1="206" y1="430" x2="206" y2="480" stroke="#0a8f4f"/><rect x="197" y="440" width="18" height="30" fill="#0a8f4f"/>
-      <!-- c4 down --><line x1="244" y1="442" x2="244" y2="482" stroke="#d12d36"/><rect x="235" y="450" width="18" height="22" fill="#d12d36"/>
-      <!-- c5 up   --><line x1="282" y1="410" x2="282" y2="464" stroke="#0a8f4f"/><rect x="273" y="420" width="18" height="36" fill="#0a8f4f"/>
-      <!-- c6 up   --><line x1="320" y1="396" x2="320" y2="442" stroke="#0a8f4f"/><rect x="311" y="404" width="18" height="28" fill="#0a8f4f"/>
-      <!-- c7 down --><line x1="358" y1="408" x2="358" y2="448" stroke="#d12d36"/><rect x="349" y="416" width="18" height="22" fill="#d12d36"/>
-      <!-- c8 up   --><line x1="396" y1="372" x2="396" y2="430" stroke="#0a8f4f"/><rect x="387" y="380" width="18" height="40" fill="#0a8f4f"/>
-      <!-- c9 up   --><line x1="434" y1="350" x2="434" y2="404" stroke="#0a8f4f"/><rect x="425" y="360" width="18" height="36" fill="#0a8f4f"/>
-      <!-- c10 down--><line x1="472" y1="364" x2="472" y2="398" stroke="#d12d36"/><rect x="463" y="372" width="18" height="16" fill="#d12d36"/>
-    </g>
-
-    <!-- area fill under the trend (subtle) -->
-    <path class="da-area"
-      d="M70,522 L150,472 L224,458 L300,408 L356,416 L416,352 L476,306 L536,214 L536,500 L70,500 Z"
-      fill="url(#da-fade)" />
-
-    <!-- THE trend: violet, breaks the frame -->
-    <g filter="url(#da-glow)">
-      <path class="da-trend"
-        d="M70,522 L150,472 L224,458 L300,408 L356,416 L416,352 L476,306 L536,214 L584,150"
-        fill="none" stroke="#6322e8" stroke-width="6"
-        stroke-linecap="round" stroke-linejoin="round"
-        marker-end="url(#da-arrow)" />
-    </g>
-
-    <!-- inflection nodes -->
-    <g class="da-nodes">
-      <circle cx="300" cy="408" r="6.5" fill="#fff" stroke="#6322e8" stroke-width="3"/>
-      <circle cx="416" cy="352" r="6.5" fill="#fff" stroke="#6322e8" stroke-width="3"/>
-      <circle cx="536" cy="214" r="7.5" fill="#6322e8"/>
-      <circle cx="536" cy="214" r="13" fill="none" stroke="#6322e8" stroke-opacity="0.3" stroke-width="2"/>
-    </g>
-
-    <!-- signature mark -->
-    <g stroke="#6322e8" stroke-width="2.4" stroke-linecap="round">
-      <line x1="96" y1="118" x2="96" y2="150"/>
-      <line x1="80" y1="134" x2="112" y2="134"/>
-    </g>
+    <!-- the sun, just clearing it -->
+    <path class="hz-sun" d="M 562 118 A 38 38 0 0 1 638 118 Z" fill="#6322e8" />
   </svg>
 </div>
 
 <style>
-  .hero-art {
+  .horizon {
     width: 100%;
-    height: 100%;
+    margin-top: var(--space-md);
   }
-  .hero-art svg {
+  .horizon svg {
     width: 100%;
-    height: 100%;
+    height: auto;
     overflow: visible;
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .da-trend {
-      stroke-dasharray: 1100;
-      stroke-dashoffset: 1100;
-      animation: da-draw 2200ms var(--ease, ease) 240ms forwards;
-    }
-    .da-orbit {
+    .hz-sun {
       transform-box: fill-box;
-      transform-origin: center;
-      animation: da-spin 60s linear infinite;
+      transform-origin: 50% 100%;
+      transform: scaleY(0);
+      animation: hz-rise 1400ms var(--ease) 200ms forwards;
     }
-    .da-nodes circle { opacity: 0; animation: da-pop 600ms var(--ease, ease) forwards; }
-    .da-nodes circle:nth-child(1) { animation-delay: 1500ms; }
-    .da-nodes circle:nth-child(2) { animation-delay: 1900ms; }
-    .da-nodes circle:nth-child(3),
-    .da-nodes circle:nth-child(4) { animation-delay: 2300ms; }
-    .da-area { opacity: 0; animation: da-fadein 1200ms ease 900ms forwards; }
+    .hz-rays line {
+      stroke-dasharray: 70;
+      stroke-dashoffset: 70;
+      animation: hz-ray 900ms var(--ease) forwards;
+    }
+    .hz-rays line:nth-child(1) { animation-delay: 1100ms; }
+    .hz-rays line:nth-child(2) { animation-delay: 1300ms; }
+    .hz-rays line:nth-child(3) { animation-delay: 1300ms; }
+    .hz-rays line:nth-child(4) { animation-delay: 1500ms; }
+    .hz-rays line:nth-child(5) { animation-delay: 1500ms; }
   }
 
-  @keyframes da-draw { to { stroke-dashoffset: 0; } }
-  @keyframes da-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
-  @keyframes da-fadein { to { opacity: 1; } }
-  @keyframes da-spin { to { transform: rotate(360deg); } }
-  .da-nodes circle { transform-box: fill-box; transform-origin: center; }
+  @keyframes hz-rise { to { transform: scaleY(1); } }
+  @keyframes hz-ray { to { stroke-dashoffset: 0; } }
 </style>

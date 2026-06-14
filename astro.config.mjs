@@ -6,12 +6,12 @@ import node from '@astrojs/node';
 // Server-rendered so the private /studio can write to the database and the
 // homepage/reading pages reflect edits instantly.
 //
-// Adapter is chosen automatically: the Vercel adapter when building ON Vercel
-// (Vercel sets the VERCEL env var), the Node adapter for local dev/preview.
+// Adapter is chosen automatically: the Netlify adapter when building ON Netlify
+// (Netlify sets the NETLIFY env var), the Node adapter for local dev/preview.
 // No manual edits needed to deploy. See DEPLOY.md.
-const onVercel = !!process.env.VERCEL;
-const adapter = onVercel
-  ? (await import('@astrojs/vercel')).default()
+const onNetlify = !!process.env.NETLIFY;
+const adapter = onNetlify
+  ? (await import('@astrojs/netlify')).default()
   : node({ mode: 'standalone' });
 
 export default defineConfig({
