@@ -53,6 +53,12 @@ export function ready(): Promise<void> {
            password_hash TEXT NOT NULL,
            created_at TEXT NOT NULL
          )`,
+        // The post-it: one short note per IST calendar day. New day, new blank.
+        `CREATE TABLE IF NOT EXISTS notes (
+           day TEXT PRIMARY KEY,
+           body TEXT NOT NULL DEFAULT '',
+           updated_at TEXT NOT NULL
+         )`,
       ],
       "write"
     );
@@ -199,6 +205,70 @@ export async function setContent(entries: Record<string, string>): Promise<void>
     args: [key, value],
   }));
   if (stmts.length) await db.batch(stmts, "write");
+}
+
+// ---- the post-it (daily short-form notes) -----------------------------------
+// One row per IST day. The studio shows today's note (blank until written);
+// every day before it is kept and browsable. Nothing is ever overwritten by a
+// new day — yesterday stays put under its own key.
+
+export interface Note {
+  day: string; // "YYYY-MM-DD" in IST
+  body: string;
+  updatedAt: string; // ISO instant
+}
+
+function rowToNote(r: Record<string, unknown>): Note {
+  return { day: String(r.day), body: String(r.body ?? ""), updatedAt: String(r.updated_at) };
+}
+
+/** Today's (or any day's) note, or null if nothing was written that day. */
+export async function getNote(day: string): Promise<Note | null> {
+  await ready();
+  const res = await client().execute({ sql: `SELECT * FROM notes WHERE day = ?`, args: [day] });
+  return res.rows.length ? rowToNote(res.rows[0] as Record<string, unknown>) : null;
+}
+
+/** Every note ever written, newest day first. */
+export async function getNotes(): Promise<Note[]> {
+  await ready();
+  const res = await client().execute(`SELECT * FROM notes ORDER BY day DESC`);
+  return res.rows.map((r) => rowToNote(r as Record<string, unknown>));
+}
+
+/** Save (or clear) a day's note. An empty body deletes the row so it stays tidy. */
+export async function setNote(day: string, body: string): Promise<void> {
+  await ready();
+  const db = client();
+  const trimmed = body.trim();
+  if (trimmed === "") {
+    await db.execute({ sql: `DELETE FROM notes WHERE day = ?`, args: [day] });
+    return;
+  }
+  await db.execute({
+    sql: `INSERT INTO notes (day, body, updated_at) VALUES (?, ?, ?)
+          ON CONFLICT(day) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at`,
+    args: [day, trimmed, new Date().toISOString()],
+  });
+}
+
+// ---- backup -----------------------------------------------------------------
+// Everything you've written, in one plain object — the basis of the studio's
+// "download a backup" button. Code lives in git; your words live only here, so
+// this is the copy you keep somewhere safe.
+
+export async function exportAll(): Promise<{
+  exportedAt: string;
+  posts: Post[];
+  notes: Note[];
+  content: Record<string, string>;
+}> {
+  await ready();
+  const [posts, notes] = await Promise.all([getPosts({ includeDrafts: true }), getNotes()]);
+  const res = await client().execute(`SELECT key, value FROM site_content`);
+  const content: Record<string, string> = {};
+  for (const r of res.rows) content[String(r.key)] = String(r.value);
+  return { exportedAt: new Date().toISOString(), posts, notes, content };
 }
 
 // ---- admin password ---------------------------------------------------------

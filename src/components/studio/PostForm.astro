@@ -1,6 +1,6 @@
 ---
 import type { Post } from "../../lib/db";
-import { toLocalInput } from "../../lib/format";
+import { toLocalInput, formatStamp } from "../../lib/format";
 
 interface Props {
   post?: Partial<Post>;
@@ -8,10 +8,14 @@ interface Props {
   submitLabel: string;
   showDelete?: boolean;
   originalSlug?: string;
+  /** New entries are stamped automatically (IST). Editing reveals the field. */
+  lockTime?: boolean;
 }
-const { post = {}, action, submitLabel, showDelete = false, originalSlug } = Astro.props;
+const { post = {}, action, submitLabel, showDelete = false, originalSlug, lockTime = false } = Astro.props;
 // datetime-local wants "YYYY-MM-DDTHH:MM" in IST wall-clock.
 const whenValue = post.publishedAt ? toLocalInput(post.publishedAt) : toLocalInput(new Date().toISOString());
+// What the automatic stamp will read as, for the "filled in for you" hint.
+const autoStamp = formatStamp(new Date());
 ---
 
 <form method="POST" action={action} class="pform">
@@ -29,17 +33,31 @@ const whenValue = post.publishedAt ? toLocalInput(post.publishedAt) : toLocalInp
       placeholder="One quiet line, if you want one.">{post.dek ?? ""}</textarea>
   </label>
 
-  <div class="row row--2" style="margin-top:1.4rem;">
-    <label class="field" style="margin-top:0;">
-      <span class="field__label">Date &amp; time <span class="field__hint">— filled in for now, change it if you like</span></span>
-      <input class="input mono" type="datetime-local" name="publishedAt" value={whenValue} required />
-    </label>
-    <label class="field" style="margin-top:0;">
-      <span class="field__label">Link <span class="field__hint">— blank = from the title</span></span>
-      <input class="input mono" type="text" name="slug" value={post.slug ?? ""}
-        pattern="[a-z0-9-]*" placeholder="auto" />
-    </label>
-  </div>
+  {lockTime ? (
+    <div class="row" style="margin-top:1.4rem; grid-template-columns: 1fr;">
+      <p class="autostamp mono">
+        <span class="autostamp__dot" aria-hidden="true"></span>
+        Stamped automatically — <strong>{autoStamp}</strong> <span class="field__hint">(India Standard Time)</span>
+      </p>
+      <label class="field" style="margin-top:1.1rem;">
+        <span class="field__label">Link <span class="field__hint">— blank = from the title</span></span>
+        <input class="input mono" type="text" name="slug" value={post.slug ?? ""}
+          pattern="[a-z0-9-]*" placeholder="auto" />
+      </label>
+    </div>
+  ) : (
+    <div class="row row--2" style="margin-top:1.4rem;">
+      <label class="field" style="margin-top:0;">
+        <span class="field__label">Date &amp; time <span class="field__hint">— change it if you like</span></span>
+        <input class="input mono" type="datetime-local" name="publishedAt" value={whenValue} required />
+      </label>
+      <label class="field" style="margin-top:0;">
+        <span class="field__label">Link <span class="field__hint">— blank = from the title</span></span>
+        <input class="input mono" type="text" name="slug" value={post.slug ?? ""}
+          pattern="[a-z0-9-]*" placeholder="auto" />
+      </label>
+    </div>
+  )}
 
   <label class="field">
     <span class="field__label">The day <span class="field__hint">— Markdown: ## heading, **bold**, *italic*, &gt; quote, - list</span></span>
@@ -65,4 +83,15 @@ const whenValue = post.publishedAt ? toLocalInput(post.publishedAt) : toLocalInp
 <style>
   .s-del { color: var(--red-ink); border-color: #f0cdd0; }
   .s-del:hover { border-color: var(--red); background: var(--red-wash); }
+  .autostamp {
+    display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+    font-size: 0.82rem; color: var(--ink-2);
+    background: var(--violet-wash); border: 1px solid #d9c9fb;
+    border-radius: var(--radius); padding: 0.7rem 0.85rem;
+  }
+  .autostamp strong { color: var(--violet-ink); font-weight: 600; }
+  .autostamp__dot {
+    width: 0.5rem; height: 0.5rem; border-radius: 100px;
+    background: var(--violet); flex: none;
+  }
 </style>

@@ -1,13 +1,17 @@
 ---
 import Base from "../layouts/Base.astro";
-import HeroArt from "../components/HeroArt.astro";
 import { getPosts, getContentMany } from "../lib/db";
 import { formatDay, formatTime } from "../lib/format";
+import { skyView } from "../lib/sky";
 
-const days = await getPosts(); // published only, newest first
+const allDays = await getPosts(); // published only, newest first
+const HOME_LIMIT = 3; // only the most recent days greet you; the rest are discovered
+const days = allDays.slice(0, HOME_LIMIT);
+const moreCount = allDays.length - days.length;
 const now = new Date();
 const todayDay = formatDay(now);
 const todayTime = formatTime(now);
+const sky = skyView(now); // one honest line about the real sky over India now
 
 // the standing note — written by you in /studio/creed
 const c = await getContentMany(["creed_eyebrow", "creed_title", "creed_body1", "creed_body2"]);
@@ -17,21 +21,24 @@ const showNote = c.creed_title.trim() !== "";
 <Base>
   <!-- ============ TODAY ============ -->
   <section class="today container">
-    <p class="today__creed">live each day as if it were your last</p>
-    <h1 class="today__h">
-      <span class="today__lead">Today is</span>
-      <span class="today__day" id="clock-day">{todayDay}</span>
-    </h1>
-    <p class="today__time mono">
-      <span id="clock-time">{todayTime}</span><span class="today__still"> — and it is still yours.</span>
-    </p>
+    <!-- the light rests behind these words, slowly turning; run a cursor or a
+         finger across them and they ripple around it like water, then settle -->
+    <div class="today__stage refract">
+      <p class="today__creed">live each day as if it were your last</p>
+      <h1 class="today__h">
+        <span class="today__lead">Today is</span>
+        <span class="today__day" id="clock-day">{todayDay}</span>
+      </h1>
+      <p class="today__time mono">
+        <span id="clock-time">{todayTime}</span><span class="today__still"> — and it is still yours.</span>
+      </p>
+    </div>
     <p class="today__intro">
       A journal kept one day at a time. Each entry below is a single day,
       written as if it might be the last one.
     </p>
+    <p class="today__sky mono" id="sky-cap">{sky.caption}</p>
   </section>
-
-  <HeroArt />
 
   <!-- ============ THE DAYS ============ -->
   <section class="days container" id="days" aria-labelledby="days-h">
@@ -59,6 +66,15 @@ const showNote = c.creed_title.trim() !== "";
           );
         })}
       </ol>
+    )}
+    {moreCount > 0 && (
+      <a href="/days" class="days__more">
+        <span class="days__more-main">
+          <span class="days__more-lead mono">there are more days</span>
+          <span class="days__more-text">{moreCount} earlier {moreCount === 1 ? "day is" : "days are"} kept back here — wander in when you like.</span>
+        </span>
+        <span class="days__more-go mono">all the days <span class="arrow">→</span></span>
+      </a>
     )}
   </section>
 
@@ -112,7 +128,25 @@ const showNote = c.creed_title.trim() !== "";
 
 <style>
   /* ---------- TODAY ---------- */
-  .today { padding-top: clamp(3rem, 1.5rem + 7vw, 7rem); padding-bottom: var(--space-lg); }
+  .today {
+    padding-top: clamp(4rem, 2rem + 9vw, 9rem);
+    padding-bottom: var(--space-lg);
+    min-height: min(82vh, 720px); /* room for the light to drift behind the words */
+  }
+  /* the stage carries the water-lens filter (added by JS when the orb is near);
+     a little padding keeps bent letters from clipping at the edges */
+  .today__stage {
+    padding: 0.4em 0.1em;
+    margin: -0.4em -0.1em;
+    will-change: filter;
+  }
+  .today__sky {
+    margin-top: var(--space-lg);
+    font-size: var(--step--1);
+    letter-spacing: 0.05em;
+    color: var(--ink-4);
+    font-variant: small-caps;
+  }
   .today__creed {
     font-family: var(--font-mono);
     font-size: var(--step--1);
@@ -228,6 +262,33 @@ const showNote = c.creed_title.trim() !== "";
     }
     .day__when { flex-direction: column; gap: 0.35rem; padding-top: 0.5rem; }
   }
+
+  /* ---------- MORE DAYS (the rest, discovered) ---------- */
+  .days__more {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-md); flex-wrap: wrap;
+    margin-top: var(--space-lg);
+    padding: clamp(1.3rem, 1rem + 1.5vw, 1.9rem) clamp(1.1rem, 0.8rem + 1.5vw, 1.7rem);
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    transition: transform 240ms var(--ease), border-color 240ms var(--ease);
+  }
+  .days__more:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+  .days__more-lead {
+    display: block; font-size: var(--step--1); letter-spacing: 0.06em;
+    color: var(--violet-ink); margin-bottom: 0.3rem;
+  }
+  .days__more-text {
+    font-family: var(--font-serif); font-size: var(--step-0);
+    color: var(--ink-2); max-width: 44ch;
+  }
+  .days__more-go {
+    font-size: var(--step--1); color: var(--ink-3); letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .days__more:hover .days__more-go { color: var(--violet-ink); }
+  .days__more-go .arrow { display: inline-block; transition: transform 240ms var(--ease); }
+  .days__more:hover .days__more-go .arrow { transform: translateX(5px); }
 
   /* ---------- THE STANDING NOTE ---------- */
   .note {

@@ -2,7 +2,6 @@
 import Studio from "../../layouts/Studio.astro";
 import PostForm from "../../components/studio/PostForm.astro";
 import { getPost, upsertPost, slugify, type Post } from "../../lib/db";
-import { fromLocalInput } from "../../lib/format";
 
 let error = "";
 let draft: Partial<Post> = {};
@@ -14,7 +13,9 @@ if (Astro.request.method === "POST") {
   if (!slug) slug = slugify(title);
   const dek = String(form.get("dek") ?? "").trim();
   const body = String(form.get("body") ?? "");
-  const publishedAt = fromLocalInput(String(form.get("publishedAt") ?? "").trim());
+  // Time is stamped automatically at the moment of publishing — the instant is
+  // captured here (UTC), and shown to readers in IST. No field to fill.
+  const publishedAt = new Date().toISOString();
   const draftFlag = form.get("draft") != null;
 
   draft = { title, slug, dek, body, publishedAt, readingMinutes: null, featured: false, draft: draftFlag };
@@ -36,6 +37,6 @@ if (Astro.request.method === "POST") {
   </header>
   <div class="s-card">
     {error && <p class="s-note">{error}</p>}
-    <PostForm post={draft} action="/studio/new" submitLabel="Publish" />
+    <PostForm post={draft} action="/studio/new" submitLabel="Publish" lockTime />
   </div>
 </Studio>

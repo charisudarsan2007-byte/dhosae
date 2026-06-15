@@ -1,10 +1,24 @@
 ---
 import Studio from "../../layouts/Studio.astro";
-import { getPosts, getContent } from "../../lib/db";
-import { formatDate, formatClock } from "../../lib/format";
+import { getPosts, getContent, getNote, setNote, getNotes } from "../../lib/db";
+import { formatDate, formatClock, formatDay, istDayKey } from "../../lib/format";
+
+const today = istDayKey();
+
+// The post-it saves here (post to /studio, redirect back — no resubmit on refresh).
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  if (form.get("_action") === "note") {
+    await setNote(today, String(form.get("note") ?? ""));
+    return Astro.redirect("/studio#postit");
+  }
+}
 
 const posts = await getPosts({ includeDrafts: true });
 const noteTitle = await getContent("creed_title");
+const todayNote = await getNote(today);
+const noteCount = (await getNotes()).length;
+const todayLabel = formatDay(new Date());
 ---
 
 <Studio title="studio · dhosae">
@@ -16,6 +30,26 @@ const noteTitle = await getContent("creed_title");
     </div>
     <a href="/studio/new" class="btn btn--violet">＋ Write today</a>
   </header>
+
+  <section class="postit" id="postit" aria-labelledby="postit-h">
+    <form method="POST" action="/studio" class="postit__pad">
+      <input type="hidden" name="_action" value="note" />
+      <div class="postit__top">
+        <span class="postit__tag mono">today's note</span>
+        <span class="postit__date mono">{todayLabel}</span>
+      </div>
+      <label class="sr-only" id="postit-h" for="postit-body">A short note for today</label>
+      <textarea id="postit-body" class="postit__body" name="note" rows="4"
+        placeholder="Anything for today — something exciting, something to remember, a thing not to forget…">{todayNote?.body ?? ""}</textarea>
+      <div class="postit__foot">
+        <span class="postit__hint mono">kept for today · a fresh one waits tomorrow</span>
+        <div class="postit__btns">
+          {noteCount > 0 && <a href="/studio/notes" class="postit__past mono">past notes →</a>}
+          <button type="submit" class="btn btn--violet postit__save">Pin it</button>
+        </div>
+      </div>
+    </form>
+  </section>
 
   {noteTitle.trim() === "" && (
     <a href="/studio/creed" class="nudge">
@@ -45,6 +79,44 @@ const noteTitle = await getContent("creed_title");
 </Studio>
 
 <style>
+  /* ---- the post-it ---- */
+  .postit { margin-bottom: 1.8rem; }
+  .postit__pad {
+    position: relative;
+    background: linear-gradient(180deg, #fff6c9 0%, #fdedae 100%);
+    border: 1px solid #efdc8a;
+    border-radius: 4px 4px 10px 10px;
+    padding: 1.1rem 1.2rem 1rem;
+    box-shadow: 0 10px 22px -14px rgba(80, 60, 0, 0.5);
+    transform: rotate(-0.5deg);
+  }
+  .postit__top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 0.75rem; margin-bottom: 0.6rem;
+  }
+  .postit__tag {
+    font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8a6d18;
+  }
+  .postit__date { font-size: 0.72rem; color: #a9883a; }
+  .postit__body {
+    width: 100%; resize: vertical; min-height: 5.5rem;
+    font-family: var(--font-serif); font-size: 1.02rem; line-height: 1.55;
+    color: #4a3c12; background: transparent; border: 0; padding: 0;
+  }
+  .postit__body::placeholder { color: #b69a4d; }
+  .postit__body:focus { outline: none; }
+  .postit__foot {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem; flex-wrap: wrap; margin-top: 0.7rem;
+    border-top: 1px dashed #e2cd7c; padding-top: 0.7rem;
+  }
+  .postit__hint { font-size: 0.68rem; color: #a9883a; letter-spacing: 0.02em; }
+  .postit__btns { display: flex; align-items: center; gap: 0.9rem; }
+  .postit__past { font-size: 0.72rem; color: #8a6d18; transition: color 160ms var(--ease); }
+  .postit__past:hover { color: #5e4a0f; text-decoration: underline; }
+  .postit__save { padding-block: 0.4rem; }
+
   .head {
     display: flex; align-items: flex-end; justify-content: space-between;
     gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem;

@@ -35,9 +35,17 @@ html {
   }
 }
 
+html {
+  /* the canvas is the sky; the fixed sky-layer and the page draw over it */
+  background-color: var(--sky-base);
+  transition: background-color 2200ms linear;
+}
+
 body {
-  background: var(--paper);
+  /* transparent so the sky layer (orb, stars) shows behind the writing */
+  background: transparent;
   color: var(--ink);
+  transition: color 2200ms linear;
   font-family: var(--font-sans);
   font-size: var(--step-0);
   line-height: var(--leading-body);

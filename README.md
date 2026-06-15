@@ -72,9 +72,14 @@ forms) · JetBrains Mono (the clock and every timestamp). All self-hosted via
 `public/favicon.svg`). A single one-stroke ring that refuses to close. The form
 *is* the idea: a thing that won't be contained.
 
-**The divider — "first light":** `src/components/HeroArt.astro` — one horizon and
-a sun just clearing it. The theme in a single line: a day beginning, and the
-quiet knowledge that it ends. Drawn from scratch; nothing sourced from the web.
+**The sky — "the light over India, now":** `src/components/Sky.astro` (computed
+in `src/lib/sky.ts`). No box and no horizon: the page *is* the sky. The real sun
+drifts in its true place by day — low and amber at dawn and dusk, high and white
+at noon — and the moon takes over by night in its correct phase, with live stars
+and the occasional comet. The whole palette turns with the hour (day · dawn ·
+dusk · night). Where that light passes behind the masthead, the writing bends and
+wraps around it like print seen through a drop of water (an SVG displacement
+lens). All astronomy, no API; honest to the minute. Drawn from scratch.
 
 ---
 
@@ -82,7 +87,7 @@ quiet knowledge that it ends. Drawn from scratch; nothing sourced from the web.
 
 ```
 src/
-  components/        Nav, Footer, HeroArt (first light), Wordmark
+  components/        Nav, Footer, Sky (the live sky + text-lens), Wordmark
     studio/PostForm  the write/edit form (title · line · date-time · body)
   layouts/
     Base.astro       public <head>, nav, footer, scroll-reveal

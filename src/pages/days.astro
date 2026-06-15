@@ -1,0 +1,109 @@
+---
+import Base from "../layouts/Base.astro";
+import { getPosts } from "../lib/db";
+import { formatDay, formatTime } from "../lib/format";
+
+const days = await getPosts(); // published only, newest first
+
+// Group by IST year so a long life of days reads as chapters, not a scroll.
+const byYear = new Map<string, typeof days>();
+for (const p of days) {
+  const year = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", year: "numeric" }).format(
+    new Date(p.publishedAt)
+  );
+  if (!byYear.has(year)) byYear.set(year, []);
+  byYear.get(year)!.push(p);
+}
+const years = [...byYear.keys()].sort((a, b) => Number(b) - Number(a));
+---
+
+<Base>
+  <section class="head container">
+    <a href="/" class="back mono">← today</a>
+    <h1 class="head__h">All the days</h1>
+    <p class="head__sub">
+      Every day kept here, newest first. {days.length} {days.length === 1 ? "entry" : "entries"} so far.
+    </p>
+  </section>
+
+  <section class="arc container">
+    {days.length === 0 ? (
+      <p class="arc__empty">No days yet.</p>
+    ) : (
+      years.map((year) => (
+        <div class="arc__year">
+          <h2 class="arc__yh mono">{year}</h2>
+          <ol class="arc__list">
+            {byYear.get(year)!.map((p) => {
+              const d = new Date(p.publishedAt);
+              return (
+                <li class="arc__row">
+                  <a href={`/posts/${p.slug}`} class="arc__link">
+                    <time class="arc__when mono" datetime={d.toISOString()}>
+                      {formatDay(d)} · {formatTime(d)}
+                    </time>
+                    <span class="arc__title">{p.title}</span>
+                    {p.dek && <span class="arc__dek">{p.dek}</span>}
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ))
+    )}
+  </section>
+</Base>
+
+<style>
+  .head { padding-top: clamp(2.5rem, 1.5rem + 5vw, 5rem); padding-bottom: var(--space-md); }
+  .back {
+    display: inline-block; font-size: var(--step--1); color: var(--ink-3);
+    letter-spacing: 0.04em; margin-bottom: var(--space-md);
+    transition: color 180ms var(--ease);
+  }
+  .back:hover { color: var(--violet-ink); }
+  .head__h {
+    font-family: var(--font-display); font-weight: 420;
+    font-size: var(--step-4); letter-spacing: -0.03em; line-height: 1.04; color: var(--ink);
+  }
+  .head__sub {
+    margin-top: var(--space-sm); font-family: var(--font-serif);
+    font-size: var(--step-0); color: var(--ink-3);
+  }
+
+  .arc { margin-top: var(--space-lg); padding-bottom: var(--space-2xl); }
+  .arc__empty { font-family: var(--font-serif); color: var(--ink-3); padding-block: var(--space-xl); }
+  .arc__year { margin-top: var(--space-xl); }
+  .arc__yh {
+    font-size: var(--step--1); letter-spacing: 0.16em; color: var(--ink-4);
+    padding-bottom: var(--space-xs); border-bottom: 1px solid var(--line);
+  }
+  .arc__list { list-style: none; margin: 0; padding: 0; }
+  .arc__row { border-bottom: 1px solid var(--line); }
+  .arc__link {
+    display: grid; grid-template-columns: 1fr; gap: 0.35rem;
+    padding: clamp(1.1rem, 0.8rem + 1.2vw, 1.7rem) 0;
+    transition: padding-left 300ms var(--ease);
+  }
+  .arc__link:hover { padding-left: 0.6rem; }
+  .arc__when { font-size: var(--step--1); color: var(--violet-ink); }
+  .arc__title {
+    font-family: var(--font-display); font-size: var(--step-2);
+    font-weight: 470; letter-spacing: -0.02em; line-height: 1.1; color: var(--ink);
+    transition: color 200ms var(--ease); max-width: 30ch;
+  }
+  .arc__link:hover .arc__title { color: var(--violet-ink); }
+  .arc__dek {
+    font-family: var(--font-serif); font-size: var(--step-0);
+    color: var(--ink-2); max-width: 52ch; line-height: 1.4;
+  }
+
+  @media (min-width: 760px) {
+    .arc__link {
+      grid-template-columns: 16rem 1fr; gap: var(--space-lg); align-items: baseline;
+    }
+    .arc__when { padding-top: 0.15rem; }
+    .arc__dek { grid-column: 2; }
+  }
+</style>

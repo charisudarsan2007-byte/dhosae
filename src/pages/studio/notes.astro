@@ -1,0 +1,72 @@
+---
+import Studio from "../../layouts/Studio.astro";
+import { getNotes } from "../../lib/db";
+import { formatDayKey, istDayKey } from "../../lib/format";
+
+const notes = await getNotes();
+const today = istDayKey();
+---
+
+<Studio title="notes · studio">
+  <header class="head">
+    <div>
+      <p class="eyebrow" style="color:var(--violet-ink)">your post-it, kept</p>
+      <h1 class="s-h">The notes</h1>
+      <p class="s-sub">Every short note you've pinned, newest first. Today's lives on the dashboard; the rest stay here.</p>
+    </div>
+    <a href="/studio" class="btn btn--ghost">＋ Write today's</a>
+  </header>
+
+  {notes.length === 0 ? (
+    <p class="empty">No notes yet. Pin your first on the dashboard →</p>
+  ) : (
+    <ol class="nlist">
+      {notes.map((n) => (
+        <li class={`ncard${n.day === today ? " ncard--today" : ""}`}>
+          <p class="ncard__day mono">
+            {formatDayKey(n.day)}
+            {n.day === today && <span class="ncard__badge">today</span>}
+          </p>
+          <p class="ncard__body">{n.body}</p>
+        </li>
+      ))}
+    </ol>
+  )}
+</Studio>
+
+<style>
+  .head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem;
+  }
+  .head .s-h { font-size: var(--step-4); margin-top: 0.3rem; }
+  .empty { padding: 2rem 0; color: var(--ink-3); }
+
+  .nlist {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  }
+  .ncard {
+    background: linear-gradient(180deg, #fff8d4 0%, #fdf0bb 100%);
+    border: 1px solid #efdc8a; border-radius: 4px 4px 10px 10px;
+    padding: 0.95rem 1.05rem 1.05rem;
+    box-shadow: 0 8px 18px -14px rgba(80, 60, 0, 0.45);
+  }
+  .ncard:nth-child(even) { transform: rotate(0.5deg); }
+  .ncard:nth-child(odd) { transform: rotate(-0.5deg); }
+  .ncard--today { outline: 2px solid var(--violet); outline-offset: 2px; }
+  .ncard__day {
+    font-size: 0.7rem; letter-spacing: 0.04em; color: #a9883a;
+    margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .ncard__badge {
+    font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--violet-ink); background: var(--violet-wash);
+    padding: 0.08rem 0.4rem; border-radius: 100px;
+  }
+  .ncard__body {
+    font-family: var(--font-serif); font-size: 1rem; line-height: 1.55;
+    color: #4a3c12; white-space: pre-wrap;
+  }
+</style>

@@ -2,6 +2,8 @@
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import Sky from "../components/Sky.astro";
+import { skyView } from "../lib/sky";
 
 interface Props {
   title?: string;
@@ -12,10 +14,15 @@ const {
   description = "A personal journal kept one day at a time. Each entry is a single day, written as if it might be the last one.",
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://dhosae.in");
+
+// The real sky over India right now (or a frozen ?sky=<ISO> preview) — it sets
+// the page's whole mood on the first paint, before the live script takes over.
+const skyOverride = Astro.url.searchParams.get("sky");
+const view = skyView(skyOverride ? new Date(skyOverride) : new Date());
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-scene={view.phase}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,6 +40,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://dhosae.in")
   </head>
   <body>
     <a href="#main" class="sr-only">Skip to content</a>
+    <Sky view={view} />
     <Nav />
     <main id="main">
       <slot />

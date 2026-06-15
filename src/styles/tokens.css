@@ -97,4 +97,82 @@
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur: 480ms;
+
+  /* ---- The sky -----------------------------------------------
+     The page itself is the sky now. `--sky-base` is what the html
+     canvas is painted, behind everything. The orb (sun or moon)
+     and its glow are tinted per the hour. Day is the warm paper we
+     have always been; dawn, dusk and night are overrides below.
+     ----------------------------------------------------------- */
+  --sky-base: var(--paper);
+  --orb-core: #fff7e6;       /* the disc itself */
+  --orb-edge: #ffce7a;       /* its rim */
+  --orb-glow: 255, 198, 120; /* rgb, for the soft halo */
+  --star-rgb: 255, 250, 235;
+  --comet-rgb: 255, 252, 244;
+  --orb-shadow: 255, 168, 90; /* the warm cast it throws */
+}
+
+/* ---- dawn — first light, a fresh pale gold ------------------- */
+:root[data-scene="dawn"] {
+  --paper: #fbeada;
+  --paper-2: #f4dcc1;
+  --paper-3: #eed0ad;
+  --ink: #2c2117;
+  --ink-2: #4f3f2d;
+  --ink-3: #7c6750;
+  --ink-4: #ab937a;
+  --line: #ecd6bb;
+  --line-strong: #ddc09e;
+  --violet-ink: #6a3bd1;
+  --sky-base: #fbeada;
+  --orb-core: #fff3d6;
+  --orb-edge: #ffb673;
+  --orb-glow: 255, 178, 110;
+  --orb-shadow: 255, 150, 92;
+}
+
+/* ---- dusk — the day going down, warm rose into amber --------- */
+:root[data-scene="dusk"] {
+  --paper: #ecd6d4;
+  --paper-2: #e3c4c2;
+  --paper-3: #d8b1b0;
+  --ink: #2b1d22;
+  --ink-2: #4d3640;
+  --ink-3: #785863;
+  --ink-4: #a5848e;
+  --line: #e0c4c2;
+  --line-strong: #cfaaa9;
+  --violet-ink: #6d34c0;
+  --sky-base: #ecd6d4;
+  --orb-core: #ffe0b0;
+  --orb-edge: #ff7e54;
+  --orb-glow: 255, 116, 80;
+  --orb-shadow: 234, 96, 92;
+}
+
+/* ---- night — deep indigo, ink turned to light --------------- */
+:root[data-scene="night"] {
+  --paper: #0b0d1c;
+  --paper-2: #14172b;
+  --paper-3: #1c2039;
+  --ink: #ecebf6;
+  --ink-2: #c4c2da;
+  --ink-3: #908ead;
+  --ink-4: #615f7d;
+  --line: rgba(216, 214, 240, 0.12);
+  --line-strong: rgba(216, 214, 240, 0.22);
+  --violet: #8b5cff;
+  --violet-ink: #b9a3ff;
+  --violet-wash: #1d1840;
+  --sky-base: #0b0d1c;
+  --orb-core: #f7f4ea;       /* the moon */
+  --orb-edge: #d2d5e8;
+  --orb-glow: 226, 230, 255;
+  --star-rgb: 247, 245, 235;
+  --comet-rgb: 226, 234, 255;
+  --orb-shadow: 90, 104, 170;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 14px 40px -18px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 40px 80px -32px rgba(0, 0, 0, 0.7);
 }

@@ -65,6 +65,27 @@ export function formatStamp(d: Date): string {
   return `${formatDay(d)} · ${formatTime(d)}`;
 }
 
+/** The IST calendar day as a stable key, "YYYY-MM-DD" — the post-it's identity. */
+export function istDayKey(d: Date = new Date()): string {
+  // en-CA renders ISO-ordered date parts; in Asia/Kolkata this is the IST day.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+/** "Sunday, 14 June 2026" for a "YYYY-MM-DD" key, read at IST noon to avoid edge slips. */
+export function formatDayKey(key: string): string {
+  const m = key.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return key;
+  const [, y, mo, d] = m;
+  // Noon IST -> a safe instant inside that calendar day in every zone.
+  const at = new Date(Date.UTC(+y, +mo - 1, +d, 12, 0) - IST_OFFSET_MS);
+  return formatDay(at);
+}
+
 /* ---- studio <-> ISO conversion ---------------------------------------------
    The studio uses an <input type="datetime-local">, whose value is a bare
    "YYYY-MM-DDTHH:MM" with no zone. We treat that wall-clock as IST in both

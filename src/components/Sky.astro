@@ -1,0 +1,465 @@
+---
+/**
+ * Sky — the page itself becomes the sky.
+ *
+ * No box, no painted backdrop, no horizon line. Just the one light that is
+ * really over India right now — the sun by day (low and amber at dawn/dusk,
+ * high and white at noon), the moon in its true phase by night — drifting in
+ * its real place across the whole window. After the sun is well down the page
+ * turns to its night palette, the stars come out, and comets cross now and then.
+ *
+ * Where that light passes behind the masthead, the writing bends and wraps
+ * around it like print seen through a drop of water — an SVG displacement lens
+ * that follows the orb. All of it is computed in `src/lib/sky.ts` (no API, just
+ * astronomy), so it is honest to the minute.
+ *
+ * This layer is decorative and inert (aria-hidden, pointer-events:none); the
+ * page reads perfectly without it.
+ */
+import type { SkyView } from "../lib/sky";
+
+interface Props {
+  view: SkyView;
+}
+const { view } = Astro.props;
+---
+
+<div
+  class="sky"
+  aria-hidden="true"
+  data-kind={view.kind}
+  style={`--ox:${view.xPct}%;--oy:${view.yPct}%;--oi:${view.intensity};--darkness:${view.darkness}`}
+>
+  <div class="sky__stars" id="sky-stars"></div>
+  <div class="sky__comets" id="sky-comets"></div>
+  <div class="sky__orb" id="sky-orb">
+    <div class="sky__glow"></div>
+    <div class="sky__disc" id="sky-disc"></div>
+  </div>
+</div>
+
+<!-- the water-lens that bends text around the orb; 0×0, just carries the filter -->
+<svg class="sky__filter" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <filter
+      id="orb-refract"
+      x="-60%"
+      y="-60%"
+      width="220%"
+      height="220%"
+      color-interpolation-filters="sRGB"
+      primitiveUnits="userSpaceOnUse"
+    >
+      <feImage id="orb-lens-img" result="lensRaw" preserveAspectRatio="none" x="0" y="0" width="10" height="10" href=""></feImage>
+      <feFlood flood-color="#808080" result="neutral"></feFlood>
+      <feComposite in="lensRaw" in2="neutral" operator="over" result="lensMap"></feComposite>
+      <feGaussianBlur id="orb-blur" in="lensMap" stdDeviation="2" result="lensSoft"></feGaussianBlur>
+      <feDisplacementMap id="orb-disp" in="SourceGraphic" in2="lensSoft" scale="0" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+    </filter>
+  </defs>
+</svg>
+
+<script>
+  import { skyView, moonLitPath, type SkyView } from "../lib/sky";
+
+  const root = document.documentElement;
+  const skyEl = document.querySelector(".sky") as HTMLElement | null;
+  const orbEl = document.getElementById("sky-orb");
+  const discEl = document.getElementById("sky-disc");
+  const starsEl = document.getElementById("sky-stars");
+  const cometsEl = document.getElementById("sky-comets");
+  const lensImg = document.getElementById("orb-lens-img");
+  const disp = document.getElementById("orb-disp");
+
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // `?sky=<ISO>` freezes the scene at any instant, for previewing dawn/dusk/night.
+  const override = new URLSearchParams(location.search).get("sky");
+  const fixed = override ? new Date(override) : null;
+
+  let view: SkyView = skyView(fixed ?? new Date());
+
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+  const smoothstep = (a: number, b: number, x: number) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+
+  // ---- the orb -------------------------------------------------------------
+  function sizeForView(v: SkyView): { disc: number; glow: number } {
+    const base = Math.min(window.innerWidth, window.innerHeight);
+    if (v.kind === "moon") {
+      const disc = clamp(base * 0.052, 40, 78);
+      return { disc, glow: disc * (2.4 + v.intensity * 1.4) };
+    }
+    // the sun swells a touch when low and burns small and bright when high
+    const disc = clamp(base * 0.075 * (1.25 - v.intensity * 0.35), 50, 120);
+    return { disc, glow: disc * (3 + v.intensity * 2.2) };
+  }
+
+  function drawOrb() {
+    if (!skyEl || !orbEl || !discEl) return;
+    const { disc, glow } = sizeForView(view);
+    skyEl.dataset.kind = view.kind;
+    skyEl.style.setProperty("--ox", `${view.xPct}%`);
+    skyEl.style.setProperty("--oy", `${view.yPct}%`);
+    skyEl.style.setProperty("--oi", `${view.intensity}`);
+    skyEl.style.setProperty("--darkness", `${view.darkness}`);
+
+    if (view.kind === "none") {
+      orbEl.style.display = "none";
+      return;
+    }
+    orbEl.style.display = "";
+    orbEl.style.setProperty("--disc", `${disc.toFixed(1)}px`);
+    orbEl.style.setProperty("--glow", `${glow.toFixed(1)}px`);
+
+    if (view.kind === "moon") {
+      const r = (disc / 2) * 0.94;
+      const c = disc / 2;
+      discEl.className = "sky__disc sky__disc--moon";
+      discEl.innerHTML = `<svg viewBox="0 0 ${disc} ${disc}" width="${disc}" height="${disc}">
+        <circle cx="${c}" cy="${c}" r="${r}" fill="rgba(255,255,255,0.05)" stroke="rgba(var(--orb-glow),0.35)" stroke-width="0.75"/>
+        ${
+          view.moonFraction > 0.012
+            ? `<path d="${moonLitPath(c, c, r, view.moonFraction, view.moonWaxing)}" fill="var(--orb-core)"/>`
+            : ""
+        }
+      </svg>`;
+    } else {
+      discEl.className = "sky__disc sky__disc--sun";
+      discEl.innerHTML = "";
+    }
+  }
+
+  // ---- the water touch-lens ------------------------------------------------
+  // The writing rests crisp over the light. Only where the cursor (or a finger)
+  // touches does it ripple and bend, like a fingertip in water — then it eases
+  // back to still after a beat. Nothing is distorted at rest.
+  let lensSize = 0;
+
+  function buildLens(radius: number) {
+    const discR = radius;
+    const reachR = discR * 2.9; // how far the bending reaches out
+    const size = Math.max(16, Math.ceil(reachR * 2));
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = size;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const im = ctx.createImageData(size, size);
+    const d = im.data;
+    const c = size / 2;
+    const inner = Math.min(0.92, discR / reachR);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const dx = x - c + 0.5;
+        const dy = y - c + 0.5;
+        const r = Math.hypot(dx, dy) || 1;
+        const t = r / (size / 2);
+        if (t >= 1) {
+          d[i] = d[i + 1] = d[i + 2] = 128;
+          d[i + 3] = 0;
+          continue;
+        }
+        // A smooth radial bump: zero at the very centre (so there is no hard
+        // singularity / spike), rising to a peak at the disc's rim where the
+        // letters wrap hardest, then easing back to nothing — water, not glitch.
+        const mag = smoothstep(0, inner * 0.85, t) * (1 - smoothstep(inner, 1, t));
+        const nx = dx / r;
+        const ny = dy / r;
+        d[i] = Math.round((0.5 + nx * mag * 0.5) * 255); // R → x displacement
+        d[i + 1] = Math.round((0.5 + ny * mag * 0.5) * 255); // G → y displacement
+        d[i + 2] = 128;
+        d[i + 3] = Math.round(255 * (1 - smoothstep(0.86, 1, t))); // soft rim
+      }
+    }
+    ctx.putImageData(im, 0, 0);
+    lensSize = size;
+    lensImg?.setAttribute("href", cv.toDataURL());
+    lensImg?.setAttribute("width", `${size}`);
+    lensImg?.setAttribute("height", `${size}`);
+    document.getElementById("orb-blur")?.setAttribute("stdDeviation", (radius * 0.11).toFixed(2));
+  }
+
+  // Follow the cursor/finger and ripple where it touches; ease back when it
+  // stops moving or leaves. The strength is animated so the bend swells in and
+  // settles out smoothly — never an abrupt, baked-in distortion.
+  const stage = document.querySelector(".refract") as HTMLElement | null;
+  let touchR = 0;
+  let lensReady = false;
+  let curScale = 0;
+  let targetScale = 0;
+  let lensRaf = 0;
+  let idleTimer: number | undefined;
+
+  const touchRadius = () => clamp(Math.min(window.innerWidth, window.innerHeight) * 0.12, 64, 140);
+
+  function placeLens(clientX: number, clientY: number) {
+    if (!stage || !lensImg) return;
+    const r = stage.getBoundingClientRect();
+    lensImg.setAttribute("x", (clientX - r.left - lensSize / 2).toFixed(1));
+    lensImg.setAttribute("y", (clientY - r.top - lensSize / 2).toFixed(1));
+  }
+
+  function lensTick() {
+    curScale += (targetScale - curScale) * 0.16; // ease toward the target
+    if (targetScale === 0 && curScale < 0.6) {
+      curScale = 0;
+      disp?.setAttribute("scale", "0");
+      stage?.style.removeProperty("filter"); // fully settled → crisp again
+      lensRaf = 0;
+      return;
+    }
+    disp?.setAttribute("scale", curScale.toFixed(1));
+    lensRaf = requestAnimationFrame(lensTick);
+  }
+
+  function ripple(e: PointerEvent) {
+    if (reduce || !stage || !lensImg || !disp) return;
+    if (!lensReady) {
+      touchR = touchRadius();
+      buildLens(touchR);
+      lensReady = true;
+    }
+    placeLens(e.clientX, e.clientY);
+    targetScale = touchR * 1.5;
+    stage.style.filter = "url(#orb-refract)";
+    if (!lensRaf) lensRaf = requestAnimationFrame(lensTick);
+    clearTimeout(idleTimer);
+    idleTimer = window.setTimeout(() => (targetScale = 0), 520); // rest, then recover
+  }
+  const settle = () => (targetScale = 0);
+
+  if (stage && !reduce) {
+    stage.addEventListener("pointermove", ripple, { passive: true });
+    stage.addEventListener("pointerdown", ripple, { passive: true });
+    stage.addEventListener("pointerleave", settle, { passive: true });
+  }
+
+  // ---- stars ---------------------------------------------------------------
+  function buildStars() {
+    if (!starsEl) return;
+    let seed = 1337;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    let html = "";
+    for (let i = 0; i < 92; i++) {
+      const x = (rnd() * 100).toFixed(2);
+      const y = (rnd() * 100).toFixed(2);
+      const s = (rnd() * 1.7 + 0.7).toFixed(2);
+      const dur = (rnd() * 2.8 + 2.6).toFixed(2);
+      const del = (rnd() * 4).toFixed(2);
+      const o = (rnd() * 0.5 + 0.45).toFixed(2);
+      html += `<span class="sky__star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;--tw:${dur}s;--td:${del}s;--so:${o}"></span>`;
+    }
+    starsEl.innerHTML = html;
+  }
+
+  // ---- comets --------------------------------------------------------------
+  let cometTimer: number | undefined;
+  function spawnComet() {
+    if (!cometsEl) return;
+    const top = (Math.random() * 42 + 2).toFixed(1);
+    const left = (Math.random() * 55 + 42).toFixed(1);
+    const dx = -(Math.random() * 45 + 55); // travels down to the left
+    const dy = Math.random() * 30 + 18;
+    const dur = (Math.random() * 0.9 + 1.0).toFixed(2);
+    const rot = (Math.atan2(dy, dx) * 180) / Math.PI; // tail along the path
+    const el = document.createElement("div");
+    el.className = "comet";
+    el.style.cssText = `top:${top}%;left:${left}%;--cdx:${dx}vw;--cdy:${dy}vh;--cdur:${dur}s;--crot:${rot}deg`;
+    el.addEventListener("animationend", () => el.remove());
+    cometsEl.appendChild(el);
+  }
+  function scheduleComets() {
+    clearTimeout(cometTimer);
+    if (reduce || view.darkness < 0.55) return;
+    const next = Math.random() * 9000 + 6000;
+    cometTimer = window.setTimeout(() => {
+      if (document.visibilityState === "visible") spawnComet();
+      scheduleComets();
+    }, next);
+  }
+
+  // ---- the loop ------------------------------------------------------------
+  function refresh() {
+    view = skyView(fixed ?? new Date());
+    root.dataset.scene = view.phase;
+    const cap = document.getElementById("sky-cap");
+    if (cap) cap.textContent = view.caption;
+    drawOrb();
+    scheduleComets();
+  }
+
+  buildStars();
+  refresh();
+
+  window.addEventListener("resize", () => {
+    drawOrb();
+    lensReady = false; // rebuild the touch-lens for the new size
+  });
+  // the sky is only ever a minute stale; a frozen ?sky preview never ticks
+  if (!fixed) setInterval(refresh, 30000);
+</script>
+
+<style is:global>
+  .sky {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
+  }
+
+  /* ---- the orb (sun / moon) --------------------------------------------- */
+  .sky__orb {
+    position: absolute;
+    left: var(--ox, 50%);
+    top: var(--oy, 30%);
+    width: var(--glow, 0);
+    height: var(--glow, 0);
+    transform: translate(-50%, -50%);
+    transition: left 24s linear, top 24s linear;
+    display: grid;
+    place-items: center;
+  }
+  .sky__glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(var(--orb-glow), calc(0.5 * var(--oi, 1))) 0%,
+      rgba(var(--orb-glow), calc(0.16 * var(--oi, 1))) 38%,
+      rgba(var(--orb-glow), 0) 68%
+    );
+  }
+  .sky__disc {
+    position: relative;
+    width: var(--disc, 0);
+    height: var(--disc, 0);
+    border-radius: 50%;
+  }
+  .sky__disc--sun {
+    background: radial-gradient(
+      circle at 38% 34%,
+      var(--orb-core) 0%,
+      var(--orb-core) 30%,
+      var(--orb-edge) 78%,
+      rgba(var(--orb-glow), 0.6) 100%
+    );
+    box-shadow: 0 0 calc(var(--disc) * 0.6) rgba(var(--orb-glow), calc(0.55 * var(--oi)));
+  }
+  /* a faint corona of rays, tucked behind the disc — it is what makes the slow
+     spin read; promoted to its own layer so the rotation composites cheaply */
+  .sky__disc--sun::before {
+    content: "";
+    position: absolute;
+    inset: -38%;
+    z-index: -1;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+      from 0deg,
+      rgba(var(--orb-glow), 0.16) 0deg,
+      rgba(var(--orb-glow), 0) 7deg 30deg
+    );
+    opacity: calc(0.4 + 0.55 * var(--oi));
+    will-change: transform;
+  }
+  .sky__disc--moon svg {
+    overflow: visible;
+    transform-box: fill-box;
+    transform-origin: center;
+    filter: drop-shadow(0 0 calc(var(--disc) * 0.35) rgba(var(--orb-glow), 0.5));
+  }
+
+  /* ---- stars ------------------------------------------------------------ */
+  .sky__stars {
+    position: absolute;
+    inset: 0;
+    opacity: var(--darkness, 0);
+    transition: opacity 2.2s linear;
+  }
+  .sky__star {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(var(--star-rgb), var(--so, 0.8));
+    box-shadow: 0 0 4px rgba(var(--star-rgb), 0.55);
+  }
+
+  /* ---- comets ----------------------------------------------------------- */
+  .sky__comets {
+    position: absolute;
+    inset: 0;
+  }
+  .comet {
+    position: absolute;
+    width: 2.5px;
+    height: 2.5px;
+    border-radius: 50%;
+    background: rgba(var(--comet-rgb), 1);
+    box-shadow: 0 0 7px 1px rgba(var(--comet-rgb), 0.9);
+    opacity: 0;
+    animation: comet-streak var(--cdur, 1.4s) ease-out forwards;
+  }
+  .comet::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(90px, 14vw, 200px);
+    height: 1.6px;
+    transform-origin: left center;
+    transform: translateY(-50%) rotate(var(--crot, 200deg));
+    background: linear-gradient(to right, rgba(var(--comet-rgb), 0.85), rgba(var(--comet-rgb), 0));
+    border-radius: 2px;
+  }
+  @keyframes comet-streak {
+    0% {
+      opacity: 0;
+      transform: translate(0, 0);
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--cdx, -60vw), var(--cdy, 30vh));
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sky__orb {
+      animation: orb-breathe 8s ease-in-out infinite;
+    }
+    .sky__glow {
+      animation: glow-breathe 7s ease-in-out infinite;
+    }
+    .sky__star {
+      animation: star-tw var(--tw, 3.4s) ease-in-out var(--td, 0s) infinite;
+    }
+    /* the light is never quite still — the sun turns, the moon drifts round */
+    .sky__disc--sun {
+      animation: orb-spin 64s linear infinite;
+      will-change: transform;
+    }
+    .sky__disc--moon svg {
+      animation: orb-spin 220s linear infinite;
+    }
+  }
+  @keyframes orb-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes orb-breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.015); }
+  }
+  @keyframes glow-breathe {
+    0%, 100% { opacity: 0.92; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  @keyframes star-tw {
+    0%, 100% { opacity: calc(var(--so, 0.8) * 0.3); }
+    50% { opacity: var(--so, 0.8); }
+  }
+</style>
