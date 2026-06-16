@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Dojo — dhosae</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#080B11;          /* terminal background */
+  --panel:#10151F;         /* card / panel */
+  --panel-2:#161D2A;       /* raised */
+  --grid:#1E2838;          /* chart grid lines */
+  --grid-soft:#161E2B;
+  --ink:#E7EEF7;           /* primary text */
+  --ink-dim:#8493A8;       /* muted */
+  --ink-faint:#566173;     /* faintest */
+  --long:#11E29B;          /* buy / profit / correct */
+  --long-deep:#0a8a5f;
+  --short:#FF4D6D;         /* sell / loss / wrong */
+  --short-deep:#a32b41;
+  --gold:#FFB627;          /* XP / reward / gold-trade */
+  --cyan:#3DD6F5;          /* info / interactive */
+  --violet:#9A7BFF;        /* boss / rare */
+  --r:14px;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--void);
+  color:var(--ink);
+  font-family:var(--body);
+  line-height:1.5;
+  min-height:100vh;
+  overflow-x:hidden;
+  background-image:
+    linear-gradient(var(--grid-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-soft) 1px,transparent 1px);
+  background-size:38px 38px;
+  background-position:center top;
+}
+.mono{font-family:var(--mono)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.app{max-width:880px;margin:0 auto;padding:0 0 90px}
+
+/* ---------- TICKER ---------- */
+.ticker{
+  position:sticky;top:0;z-index:40;
+  background:linear-gradient(180deg,#0b0f16,#0b0f16ee);
+  border-bottom:1px solid var(--grid);
+  overflow:hidden;white-space:nowrap;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;
+  padding:7px 0;backdrop-filter:blur(6px);
+}
+.ticker-track{display:inline-block;animation:scroll 38s linear infinite;will-change:transform}
+.ticker-track span{margin:0 0px;padding:0 18px;border-right:1px solid var(--grid)}
+.ti-up{color:var(--long)} .ti-dn{color:var(--short)} .ti-n{color:var(--ink-dim)} .ti-g{color:var(--gold)} .ti-c{color:var(--cyan)}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- HEADER / HUD ---------- */
+.hud{padding:16px 18px 6px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.dojo-back{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2px;transition:color .15s}
+.dojo-back:hover{color:var(--cyan)}
+.brand h1{
+  font-family:var(--disp);font-weight:700;font-size:19px;margin:0;letter-spacing:.02em;
+  display:flex;align-items:center;gap:9px;
+}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--long);box-shadow:0 0 10px var(--long);animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.brand small{color:var(--ink-faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+.hud-stat{
+  display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--grid);
+  border-radius:11px;padding:7px 11px;font-family:var(--mono);font-size:13px;
+}
+.hud-stat .lab{color:var(--ink-faint);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;display:block;line-height:1}
+.hud-stat .val{font-weight:700;font-size:15px;line-height:1.1}
+.streak .val{color:var(--gold)}
+.rank .val{color:var(--cyan)}
+
+/* level bar */
+.levelbar{margin:8px 18px 4px}
+.levelbar .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-bottom:5px}
+.levelbar .row b{color:var(--gold)}
+.bar{height:8px;background:var(--panel);border:1px solid var(--grid);border-radius:20px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ffd87a);border-radius:20px;transition:width .7s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 12px #ffb62766}
+
+/* ---------- HOME / MAP ---------- */
+.intro-hero{margin:18px 18px 6px;padding:22px 20px;border:1px solid var(--grid);border-radius:var(--r);
+  background:radial-gradient(120% 140% at 0% 0%,#13202e 0%,var(--panel) 60%);position:relative;overflow:hidden}
+.intro-hero::after{content:"";position:absolute;inset:0;background:
+  repeating-linear-gradient(90deg,transparent 0 26px,#ffffff05 26px 27px);pointer-events:none}
+.intro-hero h2{font-family:var(--disp);font-size:24px;margin:0 0 8px;line-height:1.15;font-weight:700}
+.intro-hero h2 .hl{color:var(--long)}
+.intro-hero p{color:var(--ink-dim);margin:0;font-size:14px;max-width:46ch}
+.intro-hero .candle{position:absolute;right:14px;top:0;bottom:0;width:120px;opacity:.5}
+
+.world{margin:26px 18px 0}
+.world-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.world-num{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--void);
+  background:var(--c);padding:4px 8px;border-radius:7px}
+.world-head h3{font-family:var(--disp);font-size:17px;margin:0;font-weight:600;letter-spacing:.01em}
+.world-head .sub{color:var(--ink-faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin-left:auto}
+.world-line{height:1px;background:linear-gradient(90deg,var(--c),transparent);margin:0 0 16px;opacity:.5}
+
+.nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.node{
+  position:relative;text-align:left;background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);
+  padding:15px 15px 14px;display:flex;flex-direction:column;gap:9px;transition:transform .15s,border-color .15s,box-shadow .2s;
+  min-height:118px;
+}
+.node:not(.locked):hover{transform:translateY(-3px);border-color:var(--c);box-shadow:0 8px 26px #0009}
+.node.locked{opacity:.45;cursor:not-allowed}
+.node.done{border-color:#1d3a2f}
+.node .ix{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.1em}
+.node .nm{font-family:var(--disp);font-weight:600;font-size:15.5px;line-height:1.2}
+.node .ds{font-size:12px;color:var(--ink-dim);line-height:1.35}
+.node .ft{margin-top:auto;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px}
+.node .candle-ic{font-size:18px;line-height:1}
+.node.done .ft .st{color:var(--long)}
+.node .ft .st{color:var(--ink-faint)}
+.node .xp-tag{margin-left:auto;color:var(--gold)}
+.node.boss{background:linear-gradient(160deg,#1a1430,var(--panel));border-color:#332a52}
+.node.boss .nm{color:var(--violet)}
+.node.boss:not(.locked):hover{border-color:var(--violet)}
+.lock-ic{position:absolute;right:13px;top:13px;font-size:14px;opacity:.7}
+
+/* ---------- LESSON PLAYER ---------- */
+.player{position:fixed;inset:0;z-index:60;background:var(--void);display:none;flex-direction:column;
+  background-image:linear-gradient(var(--grid-soft) 1px,transparent 1px),linear-gradient(90deg,var(--grid-soft) 1px,transparent 1px);
+  background-size:38px 38px}
+.player.on{display:flex}
+.player-top{padding:14px 16px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--grid)}
+.xbtn{width:34px;height:34px;border-radius:9px;background:var(--panel);border:1px solid var(--grid);font-size:18px;color:var(--ink-dim);display:flex;align-items:center;justify-content:center}
+.xbtn:hover{color:var(--ink);border-color:var(--short)}
+.dots{display:flex;gap:5px;flex:1;align-items:center}
+.dots i{height:5px;flex:1;border-radius:6px;background:var(--grid);transition:background .3s}
+.dots i.done{background:var(--long)}
+.dots i.cur{background:var(--gold)}
+.player-xp{font-family:var(--mono);font-size:12px;color:var(--gold);white-space:nowrap}
+.stage{flex:1;overflow-y:auto;padding:22px 18px 30px;display:flex;justify-content:center}
+.card{width:100%;max-width:600px;animation:cardin .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes cardin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.eyebrow .ic{font-size:15px}
+.card h2{font-family:var(--disp);font-size:23px;margin:0 0 14px;line-height:1.18;font-weight:700}
+.card p{font-size:15px;color:#cdd7e6;margin:0 0 13px}
+.card p.lead{font-size:16.5px;color:var(--ink)}
+.card b{color:var(--ink)}
+.k-long{color:var(--long);font-weight:600}
+.k-short{color:var(--short);font-weight:600}
+.k-gold{color:var(--gold);font-weight:600}
+.k-cyan{color:var(--cyan);font-weight:600}
+.num{font-family:var(--mono)}
+
+.callout{border:1px solid var(--grid);border-left:3px solid var(--cyan);background:var(--panel);border-radius:10px;padding:13px 15px;margin:14px 0;font-size:13.5px;color:#cbd5e3}
+.callout .ct{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:5px}
+
+/* reality 2026 */
+.reality{border:1px solid #3a2f12;background:linear-gradient(160deg,#1c1605,#13110a);border-radius:12px;padding:15px;margin:16px 0}
+.reality .rt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.tnow{display:grid;grid-template-columns:1fr auto 1fr;gap:8px 12px;align-items:center;font-size:13px}
+.tnow .then{color:var(--ink-dim);font-family:var(--mono);text-align:right}
+.tnow .arw{color:var(--gold)}
+.tnow .now{color:var(--ink);font-family:var(--mono);font-weight:600}
+.tnow .lbl{grid-column:1/-1;font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;margin-top:6px;border-top:1px dashed var(--grid);padding-top:8px}
+
+/* fact grid / chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.chip{background:var(--panel-2);border:1px solid var(--grid);border-radius:9px;padding:8px 11px;font-size:12.5px;font-family:var(--mono);display:flex;gap:7px;align-items:center}
+.chip .e{font-size:14px}
+
+/* data table */
+.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin:14px 0;overflow:hidden;border-radius:10px}
+.tbl th{background:var(--panel-2);color:var(--ink-dim);font-weight:600;text-align:left;padding:9px 11px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--grid)}
+.tbl td{padding:9px 11px;border-bottom:1px solid var(--grid-soft);background:var(--panel)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td.pos{color:var(--long)} .tbl td.neg{color:var(--short)}
+
+/* widget shell */
+.widget{background:var(--panel);border:1px solid var(--grid);border-radius:13px;padding:16px;margin:16px 0}
+.widget .wtitle{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.wrow{display:flex;align-items:center;gap:12px;margin:11px 0}
+.wrow label{font-size:12px;color:var(--ink-dim);width:128px;flex-shrink:0}
+.wrow input[type=range]{flex:1;accent-color:var(--cyan);height:4px}
+.wrow .wv{font-family:var(--mono);font-size:13px;font-weight:600;width:84px;text-align:right}
+.winput{background:var(--void);border:1px solid var(--grid);border-radius:8px;color:var(--ink);font-family:var(--mono);font-size:13px;padding:7px 9px;width:96px;text-align:right}
+.winput:focus{outline:none;border-color:var(--cyan)}
+.wout{margin-top:14px;padding-top:13px;border-top:1px dashed var(--grid);display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.wout .o{background:var(--panel-2);border:1px solid var(--grid);border-radius:9px;padding:10px 12px}
+.wout .o .l{font-size:10px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase}
+.wout .o .v{font-family:var(--mono);font-size:18px;font-weight:700;margin-top:3px}
+.toggle{display:flex;background:var(--void);border:1px solid var(--grid);border-radius:9px;padding:3px;gap:3px}
+.toggle button{flex:1;padding:8px;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-dim)}
+.toggle button.on.long{background:var(--long-deep);color:#bfffe6}
+.toggle button.on.short{background:var(--short-deep);color:#ffd0d9}
+
+/* SVG holders */
+.svgwrap{margin:14px 0;border:1px solid var(--grid);border-radius:12px;background:var(--panel);padding:8px;overflow:hidden}
+.svgwrap svg{display:block;width:100%;height:auto}
+
+/* quiz */
+.quiz .qopts{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.qopt{text-align:left;background:var(--panel);border:1px solid var(--grid);border-radius:11px;padding:13px 15px;font-size:14px;display:flex;align-items:center;gap:12px;transition:border-color .15s,background .15s}
+.qopt .key{font-family:var(--mono);font-size:12px;color:var(--ink-faint);border:1px solid var(--grid);border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qopt:not(:disabled):hover{border-color:var(--cyan)}
+.qopt.correct{border-color:var(--long);background:#0c2a20}.qopt.correct .key{border-color:var(--long);color:var(--long)}
+.qopt.wrong{border-color:var(--short);background:#2a0f16}.qopt.wrong .key{border-color:var(--short);color:var(--short)}
+.qfb{border-radius:11px;padding:13px 15px;font-size:13.5px;margin-top:4px;display:none}
+.qfb.show{display:block;animation:cardin .3s}
+.qfb.ok{background:#0c2117;border:1px solid var(--long-deep);color:#aef1d6}
+.qfb.no{background:#23121a;border:1px solid var(--short-deep);color:#ffc7d2}
+.qfb b{color:#fff}
+
+/* footer nav */
+.player-bot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--grid);background:#0b0f16}
+.cta{width:100%;padding:15px;border-radius:12px;font-family:var(--disp);font-weight:700;font-size:15px;
+  background:var(--long);color:#04130c;letter-spacing:.02em;transition:filter .15s,opacity .15s}
+.cta:hover{filter:brightness(1.08)}
+.cta:disabled{opacity:.35;cursor:not-allowed;background:var(--panel-2);color:var(--ink-faint)}
+.cta.boss{background:var(--violet);color:#0e0820}
+
+/* reward modal */
+.modal{position:fixed;inset:0;z-index:80;background:#05080cdd;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+.modal.on{display:flex;animation:cardin .3s}
+.modal .box{background:linear-gradient(170deg,var(--panel-2),var(--panel));border:1px solid var(--grid);border-radius:18px;padding:30px 26px;text-align:center;max-width:340px;width:100%;position:relative;overflow:hidden}
+.modal .big{font-size:52px;margin-bottom:8px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.modal h3{font-family:var(--disp);font-size:22px;margin:0 0 6px}
+.modal p{color:var(--ink-dim);margin:0 0 18px;font-size:14px}
+.modal .mbtn{background:var(--gold);color:#1a1203;padding:13px 26px;border-radius:11px;font-family:var(--disp);font-weight:700;font-size:14px}
+.modal.lvl .big{filter:drop-shadow(0 0 18px var(--gold))}
+.modal.badge .big{filter:drop-shadow(0 0 18px var(--violet))}
+
+/* confetti */
+.conf{position:fixed;inset:0;z-index:90;pointer-events:none;overflow:hidden}
+.conf i{position:absolute;width:9px;height:9px;top:-12px;border-radius:1px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+
+/* footer credit */
+.foot{text-align:center;color:var(--ink-faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;margin:36px 18px 0;line-height:1.7}
+.foot .reset{color:var(--ink-dim);text-decoration:underline;cursor:pointer}
+
+@media (max-width:560px){
+  .card h2{font-size:21px}
+  .intro-hero h2{font-size:21px}
+  .wrow label{width:104px}
+  .wout{grid-template-columns:1fr}
+  .nodes{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .ticker-track{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="ticker"><div class="ticker-track" id="ticker"></div></div>
+
+<div class="app" id="home">
+  <div class="hud">
+    <div class="brand">
+      <a class="dojo-back mono" href="/">← dhosae</a>
+      <h1><span class="dot"></span>THE DOJO</h1>
+      <small>Discipline 01 · Futures · 13 lessons</small>
+    </div>
+    <div class="hud-stat rank"><div><span class="lab">Rank</span><span class="val" id="rankName">Paper Trader</span></div></div>
+    <div class="hud-stat streak"><span style="font-size:17px">🔥</span><div><span class="lab">Streak</span><span class="val" id="streakVal">1</span></div></div>
+  </div>
+  <div class="levelbar">
+    <div class="row"><span>LVL <b id="lvlNum">1</b></span><span><b id="xpNow">0</b> / <span id="xpNext">150</span> XP</span></div>
+    <div class="bar"><i id="xpFill" style="width:0%"></i></div>
+  </div>
+
+  <div class="intro-hero">
+    <svg class="candle" viewBox="0 0 120 200" preserveAspectRatio="none">
+      <g stroke="#11E29b" stroke-width="6" fill="#11E29b" opacity=".9">
+        <line x1="14" y1="120" x2="14" y2="170"/><rect x="8" y="135" width="12" height="25"/>
+        <line x1="40" y1="90" x2="40" y2="150"/><rect x="34" y="100" width="12" height="40"/>
+        <line x1="66" y1="60" x2="66" y2="120"/><rect x="60" y="70" width="12" height="40"/>
+      </g>
+      <g stroke="#FF4D6D" stroke-width="6" fill="#FF4D6D" opacity=".55">
+        <line x1="92" y1="40" x2="92" y2="100"/><rect x="86" y="55" width="12" height="28"/>
+      </g>
+      <g stroke="#11E29b" stroke-width="6" fill="#11E29b">
+        <line x1="110" y1="18" x2="110" y2="70"/><rect x="104" y="28" width="12" height="34"/>
+      </g>
+    </svg>
+    <h2>Trade the <span class="hl">futures</span> market<br>without losing your shirt.</h2>
+    <p>A hands-on crash course built from Zerodha Varsity — every concept, example and formula, re-cut into bite-size cards, live calculators and quick quizzes. Grounded in the 2026 market.</p>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="foot">
+    THE DOJO · DISCIPLINE 01 — FUTURES · BUILT FROM ZERODHA VARSITY<br>
+    EDUCATIONAL ONLY — NOT INVESTMENT ADVICE<br>
+    <a class="reset" href="/">← back to dhosae</a> &nbsp;·&nbsp; <span class="reset" id="resetBtn">reset all progress</span>
+  </div>
+</div>
+
+<!-- LESSON PLAYER -->
+<div class="player" id="player">
+  <div class="player-top">
+    <button class="xbtn" id="closeP">✕</button>
+    <div class="dots" id="dots"></div>
+    <span class="player-xp" id="sessionXp">+0 XP</span>
+  </div>
+  <div class="stage"><div class="card" id="cardHost"></div></div>
+  <div class="player-bot"><button class="cta" id="nextBtn">Continue</button></div>
+</div>
+
+<!-- REWARD MODAL -->
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="big" id="mBig">⭐</div>
+    <h3 id="mTitle">Level up!</h3>
+    <p id="mText"></p>
+    <button class="mbtn" id="mClose">Keep going</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============ MARKET DATA (2026, verified) ============ */
+const MKT = {
+  nifty:"23,800", lot:65, expiry:"NSE TUE · BSE THU",
+  bankniftyLot:30, sensexLot:20, cvFloor:"₹15–20L"
+};
+
+/* ============ STORAGE (persists across sessions) ============ */
+const Store = {
+  KEY:"dhosae_dojo_futures_v1",
+  async load(){
+    try{ const r = localStorage.getItem(this.KEY); return r ? JSON.parse(r) : null; }
+    catch(e){ return null; }
+  },
+  save(state){
+    try{ localStorage.setItem(this.KEY, JSON.stringify(state)); }catch(e){}
+  }
+};
+
+/* ============ GAME STATE ============ */
+const RANKS=[
+  [0,"Paper Trader"],[150,"Punter"],[400,"Scalper"],[750,"Day Trader"],
+  [1200,"Swing Trader"],[1750,"Position Trader"],[2400,"Desk Trader"],
+  [3200,"Prop Trader"],[4200,"Market Maker"],[5500,"Quant Whale"]
+];
+let S = { xp:0, doneCards:{}, quizDone:{}, doneLessons:{}, badges:{}, streak:1, lastActive:null };
+
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function yesterdayStr(){ const d=new Date(Date.now()-864e5); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+
+function rankFor(xp){ let r=RANKS[0]; for(const x of RANKS){ if(xp>=x[0]) r=x; } return r; }
+function nextThreshold(xp){ for(const x of RANKS){ if(x[0]>xp) return x[0]; } return RANKS[RANKS.length-1][0]; }
+function lvlFor(xp){ let i=0; for(let k=0;k<RANKS.length;k++){ if(xp>=RANKS[k][0]) i=k; } return i+1; }
+
+let sessionXp=0;
+
+/* ============ CONTENT ============ */
+/* card types: intro, concept, quiz, reality, recap, widget(via html+init) */
+const fmt = s=>s; // passthrough for readability
+
+const WORLDS = [
+{ id:"w1", n:"01", title:"Origins", sub:"Forwards → Futures", color:"var(--cyan)",
+  lessons:[
+  { id:"l1", name:"The Forwards Contract", icon:"📜", blurb:"The 2,300-year-old original derivative.",
+    cards:[
+      {t:"intro",eb:"Lesson 1 · Origins",ic:"📜",h:"Before futures, there were <span class='k-cyan'>forwards</span>.",
+       body:`<p class="lead">The simplest, oldest derivative on Earth. Master this and futures become easy — futures are just forwards with airbags.</p>
+       <p>A <b>derivative</b> is a contract whose value is <i>derived</i> from an underlying asset — a stock, bond, commodity or currency.</p>`},
+      {t:"concept",eb:"320 BC flex",ic:"🏺",h:"Kautilya did this first",
+       body:`<p>India's earliest derivative shows up in <b>Kautilya's Arthashastra</b> around <span class="num">320 BC</span>. He priced standing crops <i>before</i> harvest and paid farmers in advance.</p>
+       <p>That advance-price-now, deliver-later deal? A textbook <span class="k-cyan">forward contract</span>.</p>
+       <div class="callout"><div class="ct">Why it started</div>Forwards were invented to protect farmers from prices crashing before they could sell. Lock the price today, sleep at night.</div>`},
+      {t:"concept",eb:"The setup",ic:"🤝",h:"ABC vs XYZ — the gold deal",
+       body:`<p>Two players. <b>ABC Jewelers</b> (makes jewellery) and <b>XYZ Gold Dealers</b> (sells wholesale gold).</p>
+       <div class="chips">
+        <span class="chip"><span class="e">📅</span>Signed 9 Dec 2014</span>
+        <span class="chip"><span class="e">⚖️</span>15 kg gold, 999 purity</span>
+        <span class="chip"><span class="e">💰</span>₹2,450/g = ₹3.675 Cr</span>
+        <span class="chip"><span class="e">⏳</span>Deliver 9 Mar 2015</span>
+       </div>
+       <p>It's a private, face-to-face <b>OTC</b> (over-the-counter) deal. <span class="k-long">ABC bets gold rises</span> (locks today's price). <span class="k-short">XYZ bets gold falls</span> (locks a sale).</p>
+       <p>ABC is the <b>Buyer</b> of the forward. XYZ is the <b>Seller</b>.</p>`},
+      {t:"widget",eb:"Play it out",ic:"🎚️",h:"Drag the gold price",
+       body:`<p>The deal locks ₹2,450/g. Move the March price and watch who wins. The pivot is the locked price.</p>`,
+       widget:"forwardPayoff"},
+      {t:"concept",eb:"Settling up",ic:"📦",h:"Two ways to close",
+       body:`<p>Say gold hits ₹2,700 on expiry. The 15 kg is now worth ₹4.05 Cr but ABC pays only ₹3.67 Cr. How do they settle?</p>
+       <table class="tbl"><tr><th>Physical settlement</th><th>Cash settlement</th></tr>
+       <tr><td>XYZ buys 15 kg @ ₹4.05 Cr, hands it over, receives ₹3.67 Cr.</td><td>Skip the gold. XYZ just pays ABC the ₹37.5 L difference.</td></tr></table>
+       <div class="callout"><div class="ct">Remember</div>Same economic outcome — only cash actually changes hands in a cash settlement.</div>`},
+      {t:"reality",eb:"The fatal flaws",ic:"⚠️",h:"4 reasons forwards break",
+       body:`<p>Forwards are elegant but fragile. These 4 cracks are exactly what futures were built to fix:</p>
+       <div class="chips">
+        <span class="chip"><span class="e">🌊</span>Liquidity risk — hard to find a counterparty</span>
+        <span class="chip"><span class="e">💀</span>Default / counterparty risk — what if XYZ vanishes?</span>
+        <span class="chip"><span class="e">🚫</span>Regulatory risk — no referee, lawlessness creeps in</span>
+        <span class="chip"><span class="e">🔒</span>Rigidity — can't exit halfway if your view changes</span>
+       </div>`},
+      {t:"quiz",q:"Gold rises above the locked ₹2,450 price. Who profits?",
+       opts:["ABC Jewelers, the buyer","XYZ Gold Dealers, the seller","Both equally","Neither — it's locked"],a:0,
+       fb:"ABC locked a low price, so a higher market price = savings. The buyer of a forward wins when the price rises."},
+      {t:"quiz",q:"What's the biggest structural danger in a forward with no regulator?",
+       opts:["High brokerage","Counterparty default","Too much liquidity","Taxes"],a:1,
+       fb:"With no exchange guaranteeing the trade, the other side can simply walk away. Default / counterparty risk is the killer."},
+    ]},
+  { id:"l2", name:"Enter the Futures", icon:"🏛️", blurb:"Forwards 2.0 — standardized & exchange-traded.",
+    cards:[
+      {t:"intro",eb:"Lesson 2 · Origins",ic:"🏛️",h:"Futures = forwards <span class='k-long'>with airbags</span>",
+       body:`<p class="lead">A futures contract keeps the core engine of a forward (a directional price bet) but bolts on safety features that kill all 4 flaws.</p>
+       <p>Old car vs new car: both get you A→B. The new one just adds seatbelts, ABS and airbags. Same job, safer ride.</p>`},
+      {t:"concept",eb:"The big idea",ic:"🛒",h:"A financial supermarket",
+       body:`<p>The forward's nightmare was <i>finding</i> XYZ. Futures fix this with the <b>Exchange</b> — a financial supermarket (NSE / BSE) where buyers and sellers line up automatically.</p>
+       <p>You announce your intent; willing counterparties appear. Gold, silver, crude, stocks — pick your asset and trade.</p>`},
+      {t:"concept",eb:"6 upgrades",ic:"⚙️",h:"What makes a future a future",
+       body:`<div class="chips">
+        <span class="chip"><span class="e">👯</span>Mimics the underlying — twin of spot</span>
+        <span class="chip"><span class="e">📐</span>Standardized — fixed lot & terms</span>
+        <span class="chip"><span class="e">🔁</span>Tradable — exit any time before expiry</span>
+        <span class="chip"><span class="e">🛡️</span>Regulated by SEBI — near-zero default</span>
+        <span class="chip"><span class="e">⏳</span>Time-bound — has an expiry date</span>
+        <span class="chip"><span class="e">💵</span>(Index) cash-settled</span>
+       </div>
+       <div class="callout"><div class="ct">Twin siblings</div>If the underlying (spot) goes up, the future goes up. Down, down. They move in tandem — never identical, but always together.</div>`},
+      {t:"reality",eb:"Side by side",ic:"⚔️",h:"Forwards vs Futures",
+       body:`<table class="tbl">
+        <tr><th>Forwards</th><th>Futures</th></tr>
+        <tr><td>Traded OTC</td><td class="pos">Traded on exchange</td></tr>
+        <tr><td>Custom terms</td><td class="pos">Standardized</td></tr>
+        <tr><td class="neg">High counterparty risk</td><td class="pos">No counterparty risk</td></tr>
+        <tr><td class="neg">Unregulated</td><td class="pos">Regulated by SEBI</td></tr>
+        <tr><td class="neg">Not transferable</td><td class="pos">Transferable / tradable</td></tr>
+        <tr><td>1 time frame only</td><td class="pos">Multiple expiries</td></tr>
+       </table>`},
+      {t:"concept",eb:"Before you trade",ic:"🧾",h:"4 words you must know",
+       body:`<table class="tbl">
+        <tr><th>Term</th><th>Meaning</th></tr>
+        <tr><td class="k-cyan">Lot size</td><td>Minimum quantity per contract (fixed per asset)</td></tr>
+        <tr><td class="k-cyan">Contract value</td><td>Lot size × Price</td></tr>
+        <tr><td class="k-cyan">Margin</td><td>A token deposit — a % of contract value</td></tr>
+        <tr><td class="k-cyan">Expiry</td><td>Last valid day; new contracts launch as old ones die</td></tr>
+       </table>`},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"What's changed since 2015",
+       body:`<div class="reality"><div class="rt">⟳ Then → Now</div>
+        <div class="tnow">
+          <div class="then">~₹5–10L</div><div class="arw">→</div><div class="now">${MKT.cvFloor}</div>
+          <div class="lbl">SEBI's minimum index contract value (raised Nov 2024)</div>
+        </div></div>
+        <p>SEBI pushed up contract sizes to curb hyper-speculation by retail traders. Bigger contracts, bigger respect for risk.</p>`},
+      {t:"quiz",q:"Contract Value = ?",
+       opts:["Margin × Lot size","Lot size × Price","Price × Expiry","Spot − Futures"],a:1,
+       fb:"Contract value = Lot size × Price. It's the full economic size of your position — even though you only post margin."},
+      {t:"quiz",q:"Unlike a forward, a futures contract lets you…",
+       opts:["Avoid all taxes","Exit before expiry by transferring it","Choose any lot size you want","Skip the exchange"],a:1,
+       fb:"Futures are transferable. If your view changes, you square off and walk away — no need to honour it to expiry."},
+    ]},
+  ]},
+
+{ id:"w2", n:"02", title:"First Blood", sub:"Your first trade + leverage", color:"var(--gold)",
+  lessons:[
+  { id:"l3", name:"Your First Trade", icon:"🎯", blurb:"Long the dip — the TCS setup.",
+    cards:[
+      {t:"intro",eb:"Lesson 3 · First Blood",ic:"🎯",h:"Time to actually <span class='k-gold'>trade</span>",
+       body:`<p class="lead">Every futures trade starts with one thing: a <b>directional view</b>. You think price goes up → go long. Down → go short.</p>
+       <p>Let's build a real long trade, step by step.</p>`},
+      {t:"concept",eb:"The news",ic:"📰",h:"TCS drops 3.6%",
+       body:`<p>15 Dec 2014. At its investor meet, <b>TCS</b> management sounds <i>cautious</i> about December-quarter revenue. Markets hate caution from management.</p>
+       <p>The stock sells off <span class="k-short">−3.6%</span> on the day.</p>`},
+      {t:"concept",eb:"The edge",ic:"🧠",h:"Why the trader disagrees",
+       body:`<p>The trader thinks the reaction is overdone. The logic:</p>
+       <div class="chips">
+        <span class="chip"><span class="e">🎄</span>December is always slow for Indian IT</span>
+        <span class="chip"><span class="e">🇺🇸</span>US year-end + holidays → less business</span>
+        <span class="chip"><span class="e">🔁</span>Seasonal, not a company problem</span>
+       </div>
+       <p>So the view: TCS will <span class="k-long">bounce back</span>. Go long the futures, expect a rebound.</p>`},
+      {t:"concept",eb:"The cliffhanger",ic:"❓",h:"But… why not just buy the stock?",
+       body:`<p>The trader goes long TCS futures and squares off the very next day for a profit. Clean.</p>
+       <p>Which raises the obvious question: if you're bullish, why buy futures (time-bound, an agreement) instead of just buying the stock in spot?</p>
+       <div class="callout"><div class="ct">One word</div><span class="k-gold" style="font-size:18px">Leverage.</span> That's the whole game — and the next lesson.</div>`},
+      {t:"quiz",q:"The trader's view on TCS is…",
+       opts:["Bearish — expecting it to fall further","Bullish — expecting a bounce","Neutral — no view","Hedged"],a:1,
+       fb:"The trader thinks the −3.6% is an overreaction and the stock will recover. That's a bullish / long view."},
+    ]},
+  { id:"l4", name:"Leverage & Payoff", icon:"⚡", blurb:"The superpower (and the footgun).",
+    cards:[
+      {t:"intro",eb:"Lesson 4 · First Blood",ic:"⚡",h:"<span class='k-gold'>Leverage</span>: control more with less",
+       body:`<p class="lead">Leverage lets you take a big position with a small amount of cash. It's the reason futures exist as a trader's tool.</p>
+       <p>Think real estate: you book a ₹1 Cr flat with a ₹10 L token. You control the whole asset's gains and losses with a fraction down.</p>`},
+      {t:"concept",eb:"The TCS numbers",ic:"🔢",h:"₹1L becomes 250 shares",
+       body:`<table class="tbl">
+        <tr><th>Item</th><th>Value</th></tr>
+        <tr><td>Contract value (1 lot)</td><td>₹2,95,250</td></tr>
+        <tr><td>Margin (~14%)</td><td class="pos">₹41,335 / lot</td></tr>
+        <tr><td>Your cash</td><td>₹1,00,000</td></tr>
+        <tr><td>Lots you can buy</td><td class="k-gold">2 lots = 250 shares (₹82,670 margin)</td></tr>
+        <tr><td>Idle cash left</td><td>₹17,330</td></tr>
+       </table>
+       <p>With ₹82,670 you control <b>₹5,90,500</b> of TCS. That's the magic.</p>`},
+      {t:"widget",eb:"Run the numbers",ic:"🎚️",h:"Leverage simulator",
+       body:`<p>Set your capital and a margin %, then move the underlying. Watch how a small price move swings your P&L.</p>`,
+       widget:"leverageSim"},
+      {t:"concept",eb:"The formula",ic:"📈",h:"Leverage & a linear payoff",
+       body:`<p><b>Leverage = Contract Value ÷ Margin.</b> For TCS that's ≈ <span class="num k-gold">7×</span>. Higher leverage = higher reward <i>and</i> higher risk.</p>
+       <p>Futures have a <b>linear payoff</b> — a straight line. Every point the underlying moves, you make/lose <span class="num">lot size × 1</span>. Symmetric both ways.</p>
+       <div class="callout"><div class="ct">The double-edged sword</div>Leverage magnifies gains <span class="k-long">and</span> losses equally. Used wisely it builds wealth; used carelessly it destroys it.</div>`},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"Leverage got a leash",
+       body:`<p>The mechanics are the same, but SEBI tightened things: <b>higher margins on expiry-day positions</b> and bigger contract values (${MKT.cvFloor}). Effective leverage for retail is lower than it was in 2015 — by design.</p>`},
+      {t:"quiz",q:"A contract worth ₹3,00,000 needs ₹50,000 margin. The leverage is…",
+       opts:["3×","6×","50×","0.16×"],a:1,
+       fb:"Leverage = Contract Value ÷ Margin = 3,00,000 ÷ 50,000 = 6×."},
+      {t:"quiz",q:"The payoff shape of a futures position is…",
+       opts:["Curved like an option","Linear (a straight line)","Flat","Random"],a:1,
+       fb:"Futures move 1:1 with the underlying — a straight, linear payoff. No curves like options have."},
+    ]},
+  ]},
+
+{ id:"w3", n:"03", title:"The Margin Game", sub:"Margins, M2M, RMS", color:"var(--long)",
+  lessons:[
+  { id:"l5", name:"Margins & M2M", icon:"🏦", blurb:"The token + the daily settle-up.",
+    cards:[
+      {t:"intro",eb:"Lesson 5 · Margin Game",ic:"🏦",h:"How futures kill <span class='k-short'>default risk</span>",
+       body:`<p class="lead">Forwards could be dodged. Futures can't — because of two mechanisms working together: <b>margins</b> and <b>mark-to-market</b>.</p>`},
+      {t:"concept",eb:"Initial margin",ic:"🔐",h:"SPAN + Exposure",
+       body:`<p>To open a futures position you post an <b>Initial Margin</b>, blocked the whole time you hold:</p>
+       <div class="callout"><div class="ct">The formula</div><span class="num k-cyan" style="font-size:16px">Initial Margin = SPAN + Exposure</span></div>
+       <p>SPAN covers worst-case one-day risk; Exposure is an extra buffer. Since price moves daily and IM is a % of contract value, your margin requirement <b>changes every day</b>.</p>`},
+      {t:"concept",eb:"M2M",ic:"📊",h:"Mark-to-Market: settle daily",
+       body:`<p>Every day at close, your profit or loss is <b>settled in cash</b> against your account — not held until expiry.</p>
+       <div class="chips">
+        <span class="chip"><span class="e">🟢</span>In profit → cash credited</span>
+        <span class="chip"><span class="e">🔴</span>In loss → cash debited</span>
+        <span class="chip"><span class="e">🔄</span>Reference price resets each day</span>
+       </div>
+       <p>This daily clean-up means losses can never silently pile up to a giant default. That's the genius.</p>`},
+      {t:"quiz",q:"Initial Margin is made of…",
+       opts:["SPAN + Exposure","Brokerage + STT","Premium + Spread","Profit + Loss"],a:0,
+       fb:"Initial Margin = SPAN margin + Exposure margin. SPAN is the core risk piece; Exposure is the cushion."},
+      {t:"quiz",q:"Mark-to-Market settles your P&L…",
+       opts:["Only at expiry","Once a week","Every day at market close","Never"],a:2,
+       fb:"M2M settles gains/losses to cash daily at close — preventing losses from snowballing into a default."},
+    ]},
+  { id:"l6", name:"Margin Calculator & Spreads", icon:"🧮", blurb:"Find your margin + the spread cheat-code.",
+    cards:[
+      {t:"intro",eb:"Lesson 6 · Margin Game",ic:"🧮",h:"How much do I actually need?",
+       body:`<p class="lead">A <b>SPAN calculator</b> tells you the exact margin for any contract before you trade. Here's a worked example.</p>`},
+      {t:"concept",eb:"Worked example",ic:"📱",h:"IDEA Cellular futures",
+       body:`<table class="tbl">
+        <tr><th>Component</th><th>Amount</th></tr>
+        <tr><td>SPAN margin</td><td>₹22,160</td></tr>
+        <tr><td>Exposure margin</td><td>₹14,730</td></tr>
+        <tr><td class="k-long">Initial Margin</td><td class="pos">₹36,890</td></tr>
+       </table>
+       <p>That's the cash needed to open one IDEA futures position. Simple as that.</p>`},
+      {t:"concept",eb:"The cheat-code",ic:"🃏",h:"Calendar spread = tiny margin",
+       body:`<p>Buy one expiry and sell another expiry of the <i>same</i> stock and your risk nearly cancels out. So does your margin.</p>
+       <p>Bharat Forge example:</p>`,
+       widget:"spreadBars"},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"No free lunch on expiry day",
+       body:`<p>Since <b>Feb 2025</b>, SEBI removed the calendar-spread margin benefit <b>on the expiry day</b> of the expiring leg. The hedge becomes one-sided as one contract dies, so full margin applies.</p>`},
+      {t:"quiz",q:"IDEA's total initial margin in the example is…",
+       opts:["₹22,160","₹14,730","₹36,890","₹74,991"],a:2,
+       fb:"Initial Margin = SPAN ₹22,160 + Exposure ₹14,730 = ₹36,890."},
+      {t:"quiz",q:"A calendar spread needs far less margin because…",
+       opts:["It's tax-free","The long & short legs hedge each other, cutting risk","It expires faster","Brokers feel generous"],a:1,
+       fb:"Long one expiry + short another of the same underlying ≈ neutral. Less risk → less margin."},
+    ]},
+  { id:"l7", name:"RMS & Product Types", icon:"🛂", blurb:"Tell the system more → pay less margin.",
+    cards:[
+      {t:"intro",eb:"Lesson 7 · Margin Game",ic:"🛂",h:"Meet the <span class='k-cyan'>gatekeeper</span>",
+       body:`<p class="lead">Every order you place is screened by the broker's <b>RMS</b> (Risk Management System) — a program that approves trades in a fraction of a second.</p>`},
+      {t:"concept",eb:"The trade-off",ic:"🔁",h:"Information = cheaper margin",
+       body:`<p>The RMS only cares about your risk. The more you tell it about your risk, the less margin it charges.</p>
+       <p>Hold overnight (e.g. a BPCL future while crude gaps up 5% overnight)? That's <b>overnight risk</b> → full margin. Intraday only? Less risk → less margin.</p>`},
+      {t:"concept",eb:"Product types",ic:"🎛️",h:"NRML · MIS · CO · BO",
+       body:`<table class="tbl">
+        <tr><th>Type</th><th>Tells RMS</th><th>Margin</th></tr>
+        <tr><td>NRML</td><td>Nothing extra (carry to expiry)</td><td class="neg">Full</td></tr>
+        <tr><td>MIS</td><td>Intraday (auto square-off ~3:20pm)</td><td>Lower</td></tr>
+        <tr><td>CO</td><td>Intraday + your stop-loss</td><td class="pos">Lowest</td></tr>
+        <tr><td>BO</td><td>Intraday + stop-loss + target</td><td class="pos">= CO</td></tr>
+       </table>
+       <div class="callout"><div class="ct">Why BO = CO</div>RMS only cares about your <i>loss</i> (the stop-loss), not your target. So adding a target changes nothing for margin.</div>`},
+      {t:"quiz",q:"Which product type auto-squares your position around 3:20pm?",
+       opts:["NRML","MIS","CNC","Delivery"],a:1,
+       fb:"MIS is pure intraday. If you don't close it, the RMS does it for you near 3:20pm."},
+      {t:"quiz",q:"Giving the RMS more information about your risk generally means…",
+       opts:["Higher margin","Lower margin","No change","A penalty"],a:1,
+       fb:"More clarity on your risk → the RMS can charge less. CO/BO (which carry a stop-loss) get the lowest margins."},
+    ]},
+  ]},
+
+{ id:"w4", n:"04", title:"Both Directions", sub:"Shorting + Nifty & liquidity", color:"var(--short)",
+  lessons:[
+  { id:"l8", name:"Shorting", icon:"🔻", blurb:"Profit when prices fall. Sell first, buy later.",
+    cards:[
+      {t:"intro",eb:"Lesson 8 · Both Directions",ic:"🔻",h:"Make money when things <span class='k-short'>fall</span>",
+       body:`<p class="lead">Normally you buy low, sell high. Shorting flips it: <b>sell first, buy later</b>. You profit when the price drops.</p>
+       <p>Cricket analogy: you bet India wins (long), your friend bets India loses (short). One of you is "short India".</p>`},
+      {t:"concept",eb:"The HCL short",ic:"🎯",h:"Set up the trade",
+       body:`<table class="tbl">
+        <tr><th>Detail</th><th>Value</th></tr>
+        <tr><td>Short price</td><td>₹1,990</td></tr>
+        <tr><td>Target</td><td class="pos">₹1,950</td></tr>
+        <tr><td>Stop-loss</td><td class="neg">₹2,000</td></tr>
+        <tr><td>Reward / risk</td><td>₹40 vs ₹10</td></tr>
+       </table>
+       <div class="callout"><div class="ct">Counter-intuitive rule</div>In a short, your stop-loss sits <b>above</b> your entry — because you lose when price rises.</div>`},
+      {t:"widget",eb:"Feel it",ic:"🎚️",h:"Long / Short P&L",
+       body:`<p>Toggle direction, set entry & exit, and watch the P&L flip. Shorts go green as price falls.</p>`,
+       widget:"longShort"},
+      {t:"concept",eb:"Spot rule",ic:"⏰",h:"Spot shorts = intraday only",
+       body:`<p>Short a stock in the <b>spot</b> market and you must buy it back the same day. Why? The exchange can't tell a short sale from a normal sale — by EOD it expects delivery.</p>
+       <p>No shares to deliver = <span class="k-short">short delivery</span> → auction + penalty up to <b>20%</b>. Brutal. Always cover before close.</p>`},
+      {t:"concept",eb:"Futures rule",ic:"🌙",h:"Futures shorts can sleep over",
+       body:`<p>Short a <b>future</b> and there's no such restriction — you can carry it overnight, for days. Margins are the <b>same as a long</b>. This freedom is a huge reason futures are popular.</p>`},
+      {t:"widget",eb:"Watch M2M",ic:"📉",h:"6 days of a short",
+       body:`<p>Short HCL futures @ ₹1,990, lot 125. Tap to reveal each day's mark-to-market.</p>`,
+       widget:"m2mShort"},
+      {t:"quiz",q:"When you short, your stop-loss is placed…",
+       opts:["Below the entry price","Above the entry price","At the entry price","There's no stop-loss"],a:1,
+       fb:"A short loses money when price rises, so the protective stop-loss sits above your entry."},
+      {t:"quiz",q:"Can you carry a SPOT short position overnight?",
+       opts:["Yes, freely","No — spot shorts are intraday only","Only on Fridays","Only with extra margin"],a:1,
+       fb:"Spot shorts must be covered the same day, or you risk short delivery + auction penalty. Only futures shorts carry overnight."},
+    ]},
+  { id:"l9", name:"Nifty Futures & Liquidity", icon:"👑", blurb:"The most liquid contract in India.",
+    cards:[
+      {t:"intro",eb:"Lesson 9 · Both Directions",ic:"👑",h:"<span class='k-gold'>Nifty</span> — the king contract",
+       body:`<p class="lead">Nifty Futures is India's most liquid derivative and one of the top-10 index futures traded in the world. Its underlying is the Nifty 50 index itself.</p>`},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"The numbers moved a lot",
+       body:`<div class="reality"><div class="rt">⟳ Then → Now</div>
+        <div class="tnow">
+          <div class="then">~11,470</div><div class="arw">→</div><div class="now">~${MKT.nifty}</div>
+          <div class="lbl">Nifty level</div>
+          <div class="then">75</div><div class="arw">→</div><div class="now">${MKT.lot}</div>
+          <div class="lbl">Nifty lot size (revised end-2025)</div>
+          <div class="then">last Thursday</div><div class="arw">→</div><div class="now">${MKT.expiry}</div>
+          <div class="lbl">Expiry day (changed Sep 2025)</div>
+        </div></div>
+        <p>Weekly expiries are now limited to <b>Nifty (NSE)</b> and <b>Sensex (BSE)</b> only. Bank Nifty / FinNifty weeklies were scrapped in Nov 2024.</p>`},
+      {t:"concept",eb:"Liquidity meter",ic:"🌊",h:"Impact cost",
+       body:`<p><b>Impact cost</b> is what a round-trip trade quietly costs you because of the bid-ask gap. It's the real measure of liquidity.</p>
+       <div class="chips">
+        <span class="chip"><span class="e">⬆️</span>More liquidity → lower impact cost</span>
+        <span class="chip"><span class="e">⬇️</span>Lower spread → lower impact cost</span>
+        <span class="chip"><span class="e">🧊</span>More liquidity → less volatility</span>
+       </div>`},
+      {t:"widget",eb:"Worked example",ic:"🧮",h:"Infosys impact cost",
+       body:`<p>Buying 350 Infosys shares from this order book. Tap to compute.</p>`,
+       widget:"impactCost"},
+      {t:"concept",eb:"Why Nifty",ic:"✅",h:"6 reasons it beats single stocks",
+       body:`<div class="chips">
+        <span class="chip"><span class="e">🧺</span>Diversified — only systematic risk</span>
+        <span class="chip"><span class="e">🛡️</span>Hard to manipulate</span>
+        <span class="chip"><span class="e">💧</span>Ultra-liquid (impact ≈ 0.0082%)</span>
+        <span class="chip"><span class="e">💰</span>Lesser margins (12–15% vs 45–60%)</span>
+        <span class="chip"><span class="e">🌐</span>A broad economic call, not a stock bet</span>
+        <span class="chip"><span class="e">📊</span>Less volatile (~16–17% vs ~30%)</span>
+       </div>
+       <div class="callout"><div class="ct">Jargon unlocked</div><b>Systematic risk</b> hits the whole market. <b>Unsystematic risk</b> is company-specific. A diversified index strips out the unsystematic part.</div>`},
+      {t:"quiz",q:"Higher impact cost signals…",
+       opts:["Higher liquidity","Lower liquidity","Lower price","Higher dividends"],a:1,
+       fb:"Impact cost rises when liquidity falls — a thin book means your trade moves the price against you."},
+      {t:"quiz",q:"Trading Nifty futures (vs a single stock) removes which risk?",
+       opts:["Systematic risk","Unsystematic (company-specific) risk","All risk","Currency risk"],a:1,
+       fb:"An index is diversified, so company-specific (unsystematic) risk washes out. You're left with broad market (systematic) risk."},
+    ]},
+  ]},
+
+{ id:"w5", n:"05", title:"Pro Desk", sub:"Pricing · Hedging · OI · Delivery", color:"var(--cyan)",
+  lessons:[
+  { id:"l10", name:"Pricing & Arbitrage", icon:"📐", blurb:"Fair value, premium/discount, free money.",
+    cards:[
+      {t:"intro",eb:"Lesson 10 · Pro Desk",ic:"📐",h:"Why futures ≠ spot",
+       body:`<p class="lead">The gap between futures and spot price is the <b>basis</b> (or spread). Example: Nifty spot 8,845.5, futures 8,854.7 → spread <span class="num">9.2</span>.</p>
+       <p>That gap isn't random — it follows a formula.</p>`},
+      {t:"concept",eb:"The formula",ic:"🧪",h:"Spot-Future parity",
+       body:`<div class="callout"><div class="ct">Futures fair value</div><span class="num k-cyan" style="font-size:15px">Futures = Spot × [1 + rf × (x/365)] − d</span></div>
+       <p><b>rf</b> = risk-free rate (RBI's 91-day T-bill is the proxy), <b>x</b> = days to expiry, <b>d</b> = expected dividend.</p>
+       <p>More days to expiry → bigger gap. As expiry nears, the gap shrinks to zero.</p>`},
+      {t:"widget",eb:"Calculate it",ic:"🎚️",h:"Futures pricing calculator",
+       body:`<p>Plug in spot, days, rate and dividend. Compare your fair value to a market price to spot premium or discount.</p>`,
+       widget:"pricingCalc"},
+      {t:"concept",eb:"Premium vs discount",ic:"🔀",h:"Contango & backwardation",
+       body:`<div class="chips">
+        <span class="chip"><span class="e">🟢</span>Futures &gt; Spot = <b>premium</b> (commodities: contango)</span>
+        <span class="chip"><span class="e">🔴</span>Futures &lt; Spot = <b>discount</b> (backwardation)</span>
+       </div>
+       <div class="callout"><div class="ct">Iron law</div>On expiry day, spot and futures <b>always converge</b> to one price. Always.</div>`},
+      {t:"widget",eb:"Free money?",ic:"💸",h:"Cash & carry arbitrage",
+       body:`<p>Wipro fair value ≈ 658, but futures trade at 700. Buy cheap (spot), sell expensive (futures), lock the spread no matter where it expires.</p>`,
+       widget:"arbTable"},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"Rates are much lower now",
+       body:`<p>The Varsity example uses an 8.35% risk-free rate. In 2026, India's short-term rates are meaningfully lower, so fair-value premiums are thinner. Always pull the live <b>91-day T-bill rate</b> from rbi.org.in before pricing.</p>`},
+      {t:"quiz",q:"Futures trading ABOVE spot is called…",
+       opts:["Discount / backwardation","Premium / contango","Convergence","Basis risk"],a:1,
+       fb:"Futures > spot = premium (in commodities, contango). The reverse is discount / backwardation."},
+      {t:"quiz",q:"On expiry day, the spot and futures prices…",
+       opts:["Diverge sharply","Always converge","Stay fixed at the spread","Get cash-settled at random"],a:1,
+       fb:"They always converge to a single price at expiry — which is exactly what makes cash-&-carry arbitrage risk-free."},
+    ]},
+  { id:"l11", name:"Hedging", icon:"🛡️", blurb:"Insulate your portfolio with a fence.",
+    cards:[
+      {t:"intro",eb:"Lesson 11 · Pro Desk",ic:"🛡️",h:"Build a <span class='k-long'>fence</span> around your money",
+       body:`<p class="lead">Nurture a garden, then stray cows show up. You don't sell the garden — you put up a fence. Hedging is that fence for your portfolio: futures that protect against a market drop.</p>`},
+      {t:"concept",eb:"Why bother",ic:"📉",h:"Falls are easy, recoveries aren't",
+       body:`<p>A stock falling −25% needs to rise <span class="num k-short">+33.3%</span> just to break even. The math of recovery is punishing.</p>
+       <div class="callout"><div class="ct">Two risks</div><b>Systematic</b> risk (market-wide: GDP, rates) → you <b>hedge</b> it.<br><b>Unsystematic</b> risk (company-specific) → you <b>diversify</b> it away. Different tools.</div>`},
+      {t:"concept",eb:"Single stock",ic:"🔒",h:"Freeze a position",
+       body:`<p>Long 250 Infosys @ ₹2,284 (₹5,71,000). Worried about results → short Infosys futures @ ₹2,285 (lot 250).</p>
+       <table class="tbl">
+        <tr><th>Price</th><th>Spot P&L</th><th>Futures P&L</th><th>Net</th></tr>
+        <tr><td>2200</td><td class="neg">−84</td><td class="pos">+85</td><td>+1</td></tr>
+        <tr><td>2290</td><td class="pos">+6</td><td class="neg">−5</td><td>+1</td></tr>
+        <tr><td>2500</td><td class="pos">+216</td><td class="neg">−215</td><td>+1</td></tr>
+       </table>
+       <p>Net P&L ≈ flat at any price. The position is <b>frozen / market-neutral</b>. (You need shares = lot size for a perfect hedge.)</p>`},
+      {t:"concept",eb:"Beta",ic:"β",h:"How much a stock follows the market",
+       body:`<p><b>Beta (β)</b> measures sensitivity to the market. The market itself has β = <span class="num">+1</span>.</p>
+       <table class="tbl">
+        <tr><th>Beta</th><th>Meaning</th></tr>
+        <tr><td>0.7</td><td>Moves 0.7% per 1% market move (low-beta, calmer)</td></tr>
+        <tr><td>&gt; 1</td><td>High-beta — amplifies the market</td></tr>
+        <tr><td>&lt; 0</td><td>Moves opposite to the market</td></tr>
+       </table>
+       <p>Compute it in Excel with <span class="num">=SLOPE(stock returns, Nifty returns)</span>.</p>`},
+      {t:"widget",eb:"Hedge a portfolio",ic:"🧮",h:"Portfolio hedge calculator",
+       body:`<p>Find how many Nifty lots to short to protect a portfolio. Hedge value = β × portfolio value; lots = hedge ÷ Nifty contract value.</p>`,
+       widget:"portfolioHedge"},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"Smaller pockets, use options",
+       body:`<p>Same maths today — just plug Nifty ~${MKT.nifty} and lot ${MKT.lot} (so one Nifty contract ≈ ₹15L+). If your portfolio is smaller than one Nifty contract, you <b>can't</b> hedge it with futures — use options instead.</p>`},
+      {t:"quiz",q:"The beta of the market index itself is…",
+       opts:["0","+1","Depends on the day","Infinite"],a:1,
+       fb:"By definition the market (Nifty/Sensex) has β = +1. Everything else is measured relative to it."},
+      {t:"quiz",q:"We hedge ___ risk and diversify away ___ risk.",
+       opts:["unsystematic / systematic","systematic / unsystematic","both with diversification","neither can be reduced"],a:1,
+       fb:"Hedge → systematic (market-wide) risk. Diversify → unsystematic (company-specific) risk."},
+    ]},
+  { id:"l12", name:"Open Interest", icon:"🔢", blurb:"How many bets are live right now.",
+    cards:[
+      {t:"intro",eb:"Lesson 12 · Pro Desk",ic:"🔢",h:"<span class='k-cyan'>Open Interest</span> = live contracts",
+       body:`<p class="lead">OI counts how many contracts are currently open (not yet closed). Every trade has a long and a short — one open contract = OI of 1.</p>`},
+      {t:"widget",eb:"Story mode",ic:"👥",h:"5 traders, 1 week",
+       body:`<p>Follow Arjun, Neha, Varun, John & Vikram. Step through the week and watch OI breathe.</p>`,
+       widget:"oiStory"},
+      {t:"concept",eb:"Zero-sum",ic:"⚖️",h:"It all nets to zero",
+       body:`<p>Add up longs (+) and shorts (−) and you always get <span class="num">0</span>. Derivatives <b>transfer</b> wealth between traders — they don't create it. That's why they're a zero-sum game.</p>`},
+      {t:"concept",eb:"OI vs Volume",ic:"📊",h:"Two different beasts",
+       body:`<table class="tbl">
+        <tr><th>Volume</th><th>Open Interest</th></tr>
+        <tr><td>Trades done today (1 buy+1 sell = 1)</td><td>Total contracts still open</td></tr>
+        <tr><td>Resets to 0 each day</td><td class="pos">Continuous — carries over</td></tr>
+        <tr><td>Only rises intraday</td><td>Goes up & down</td></tr>
+       </table>
+       <p>Doesn't change when contracts merely <b>transfer</b> between traders. Bigger OI = more liquid.</p>`},
+      {t:"widget",eb:"Read the tape",ic:"🔮",h:"Price + OI interpreter",
+       body:`<p>Pick a price direction and an OI direction to read what traders are doing.</p>`,
+       widget:"oiInterp"},
+      {t:"reality",eb:"Reality check · 2026",ic:"🛰️",h:"Watch the euphoria",
+       body:`<p>Abnormally high OI + a sharp price move = heavy leverage + euphoria. One small trigger can cause a stampede. NSE now also reports <b>delta-based (future-equivalent) OI</b> for a truer picture of positioning.</p>`},
+      {t:"quiz",q:"When contracts merely transfer from one trader to another, OI…",
+       opts:["Doubles","Stays the same","Drops to zero","Becomes negative"],a:1,
+       fb:"OI only changes when contracts are created or closed. A pure transfer keeps OI unchanged."},
+      {t:"quiz",q:"Price ↑ and OI ↑ together suggests…",
+       opts:["Short covering","Long unwinding","Fresh longs building","Nothing"],a:2,
+       fb:"Rising price + rising OI = new money going long. (Falling price + rising OI = fresh shorts building.)"},
+    ]},
+  { id:"l13", name:"Physical Settlement", icon:"📦", blurb:"Hold to expiry, get the actual shares.",
+    cards:[
+      {t:"intro",eb:"Lesson 13 · Pro Desk",ic:"📦",h:"Stock F&O get <span class='k-gold'>physically</span> settled",
+       body:`<p class="lead">SEBI's 2018 rule (live since Oct 2019): all <b>stock</b> F&O held to expiry are settled by actual delivery of shares — not cash. (Index F&O stay cash-settled.)</p>
+       <p>The goal: stop expiry-day manipulation and short squeezes.</p>`},
+      {t:"concept",eb:"Who delivers what",ic:"🔁",h:"Take vs Give delivery",
+       body:`<table class="tbl">
+        <tr><th>You TAKE delivery</th><th>You GIVE delivery</th></tr>
+        <tr><td class="pos">Long Futures</td><td class="neg">Short Futures</td></tr>
+        <tr><td class="pos">Long ITM Call</td><td class="neg">Short ITM Call</td></tr>
+        <tr><td class="pos">Short ITM Put</td><td class="neg">Long ITM Put</td></tr>
+       </table>
+       <p>Only <b>ITM</b> options settle. OTM options expire worthless — no delivery.</p>`},
+      {t:"concept",eb:"Netting",ic:"➕",h:"Offsetting legs cancel",
+       body:`<p>If your positions hedge each other, they net off — no delivery. e.g. <b>SBI long futures + long ITM Put (strike 200, spot 180)</b>: one wants to take delivery, the other to give → netted to zero.</p>`},
+      {t:"concept",eb:"The catch",ic:"⚠️",h:"You need the full value",
+       body:`<p>To take or give delivery you must bring <b>100% of the contract value</b> (or the actual shares) — not just margin. Brokers ratchet up margins as expiry approaches to force you to decide.</p>
+       <div class="callout"><div class="ct">Rule of thumb</div>Don't let a stock F&O position drift into expiry unless you actually want the delivery (and the cash to pay for it).</div>`},
+      {t:"quiz",q:"At expiry, a LONG stock futures position means you…",
+       opts:["Give delivery of shares","Take delivery of shares","Get cash only","Nothing happens"],a:1,
+       fb:"Long futures = you take delivery (shares come into your demat). Short futures = you give delivery."},
+      {t:"quiz",q:"An OTM option at expiry…",
+       opts:["Must be physically settled","Expires worthless — no delivery","Converts to futures","Is auto-exercised"],a:1,
+       fb:"Only ITM options are physically settled. OTM options simply expire worthless with no delivery obligation."},
+    ]},
+  ]},
+];
+
+/* boss reviews per world (recombine facts) */
+const BOSSES = {
+  w1:{ name:"Boss · Origins", q:[
+    {q:"Which risk is NOT a flaw of forward contracts?",opts:["Default risk","Liquidity risk","Daily mark-to-market","Rigidity"],a:2,fb:"M2M is a feature of futures, not a flaw of forwards. The 4 forward flaws are liquidity, default, regulatory & rigidity."},
+    {q:"The exchange replaces what painful part of a forward?",opts:["Paying taxes","Hunting for a counterparty","Reading charts","Calculating beta"],a:1,fb:"The exchange is the 'financial supermarket' — counterparties line up automatically."},
+    {q:"Futures retain the forward's core idea of…",opts:["A directional price bet","Physical delivery only","Unlimited customization","No expiry"],a:0,fb:"Same core engine — a bet on price direction — just with safety and standardization added."},
+  ]},
+  w2:{ name:"Boss · First Blood", q:[
+    {q:"Leverage magnifies…",opts:["Only gains","Only losses","Both gains and losses","Neither"],a:2,fb:"It's a double-edged sword — wins and losses scale equally."},
+    {q:"A ₹4,00,000 contract on ₹50,000 margin = leverage of…",opts:["4×","8×","50×","0.5×"],a:1,fb:"4,00,000 ÷ 50,000 = 8×."},
+    {q:"A futures payoff line is…",opts:["Curved","Linear","Flat","Stepped"],a:1,fb:"Linear — 1:1 with the underlying."},
+  ]},
+  w3:{ name:"Boss · Margin Game", q:[
+    {q:"Initial Margin = ?",opts:["SPAN + Exposure","SPAN only","Brokerage + STT","Profit − Loss"],a:0,fb:"SPAN + Exposure."},
+    {q:"Which order type carries the LOWEST margin?",opts:["NRML","MIS","CO / BO","All equal"],a:2,fb:"CO/BO convey your stop-loss, so RMS charges the least."},
+    {q:"M2M protects the system by…",opts:["Settling P&L daily","Removing all risk","Avoiding taxes","Raising leverage"],a:0,fb:"Daily settlement stops losses snowballing into a default."},
+  ]},
+  w4:{ name:"Boss · Both Directions", q:[
+    {q:"Short futures can be held overnight?",opts:["Yes","No","Only Fridays","Only on Nifty"],a:0,fb:"Yes — unlike spot shorts, which are intraday only."},
+    {q:"Lower impact cost means…",opts:["Less liquidity","More liquidity","Higher volatility","Higher spread"],a:1,fb:"Low impact cost = deep, liquid book."},
+    {q:"A round-trip trade (buy best-ask, sell best-bid) always results in…",opts:["A profit","A loss","Break-even","A dividend"],a:1,fb:"You cross the spread twice — always a small loss. That loss IS the impact cost."},
+  ]},
+  w5:{ name:"Boss · Pro Desk · FINAL", q:[
+    {q:"Futures below spot is called…",opts:["Premium / contango","Discount / backwardation","Convergence","Basis"],a:1,fb:"Discount, a.k.a. backwardation in commodities."},
+    {q:"Hedge value for a portfolio = ?",opts:["Beta × portfolio value","Portfolio value ÷ beta","Beta ÷ value","Lot size × price"],a:0,fb:"Beta × portfolio value, then ÷ Nifty contract value for the number of lots."},
+    {q:"Price ↑ with OI ↓ usually means…",opts:["Fresh longs","Short covering","Long unwinding","Fresh shorts"],a:1,fb:"Rising price + falling OI = shorts buying back to cover."},
+    {q:"At expiry, an OTM stock option…",opts:["Is physically settled","Expires worthless","Becomes a future","Is auto-exercised"],a:1,fb:"Only ITM options settle; OTM expire worthless."},
+  ]},
+};
+
+/* ============ XP RULES ============ */
+const XP = { card:10, quizFirst:25, quizRetry:10, lessonDone:50, bossDone:120 };
+
+/* ============ FLATTEN into a node sequence per world ============ */
+function lessonById(lid){
+  for(const w of WORLDS){ for(const l of w.lessons){ if(l.id===lid) return {world:w,lesson:l}; } }
+  if(lid.startsWith("boss_")){ const wid=lid.slice(5); const w=WORLDS.find(x=>x.id===wid); return {world:w,boss:BOSSES[wid],bossId:lid}; }
+  return null;
+}
+function worldOrder(){ return WORLDS.map(w=>w.id); }
+
+/* a world is "complete" when all its lessons + its boss are done */
+function worldLessonIds(w){ return w.lessons.map(l=>l.id); }
+function isWorldUnlocked(wIndex){
+  if(wIndex===0) return true;
+  const prev = WORLDS[wIndex-1];
+  const need = worldLessonIds(prev).concat(["boss_"+prev.id]);
+  return need.every(id=>S.doneLessons[id]);
+}
+function isLessonUnlocked(w, lIndex){
+  if(!isWorldUnlocked(WORLDS.indexOf(w))) return false;
+  if(lIndex===0) return true;
+  return !!S.doneLessons[w.lessons[lIndex-1].id];
+}
+function isBossUnlocked(w){
+  if(!isWorldUnlocked(WORLDS.indexOf(w))) return false;
+  return worldLessonIds(w).every(id=>S.doneLessons[id]);
+}
+
+/* ============ RENDER HOME ============ */
+const $ = s=>document.querySelector(s);
+function syncHud(){
+  const r=rankFor(S.xp), lvl=lvlFor(S.xp), next=nextThreshold(S.xp);
+  const base = RANKS[lvl-1][0];
+  $("#rankName").textContent=r[1];
+  $("#streakVal").textContent=S.streak;
+  $("#lvlNum").textContent=lvl;
+  $("#xpNow").textContent=S.xp;
+  $("#xpNext").textContent=next;
+  const pct = next<=base?100:Math.min(100,Math.round((S.xp-base)/(next-base)*100));
+  $("#xpFill").style.width=pct+"%";
+}
+function renderMap(){
+  const map=$("#map"); map.innerHTML="";
+  WORLDS.forEach((w,wi)=>{
+    const wEl=document.createElement("div"); wEl.className="world"; wEl.style.setProperty("--c",w.color);
+    const done = worldLessonIds(w).filter(id=>S.doneLessons[id]).length;
+    wEl.innerHTML=`<div class="world-head">
+        <span class="world-num">${w.n}</span>
+        <h3>${w.title}</h3>
+        <span class="sub">${done}/${w.lessons.length} · ${w.sub}</span>
+      </div><div class="world-line"></div>`;
+    const nodes=document.createElement("div"); nodes.className="nodes";
+    w.lessons.forEach((l,li)=>{
+      const unlocked=isLessonUnlocked(w,li), isd=!!S.doneLessons[l.id];
+      const n=document.createElement("button");
+      n.className="node"+(unlocked?"":" locked")+(isd?" done":"");
+      n.innerHTML=`${unlocked?"":'<span class="lock-ic">🔒</span>'}
+        <div class="ix">${l.icon} LESSON ${WORLDS.slice(0,wi).reduce((a,x)=>a+x.lessons.length,0)+li+1}</div>
+        <div class="nm">${l.name}</div>
+        <div class="ds">${l.blurb}</div>
+        <div class="ft"><span class="candle-ic">${isd?"🟢":(unlocked?"🟡":"⚫")}</span>
+          <span class="st">${isd?"Cleared":(unlocked?"Ready":"Locked")}</span>
+          <span class="xp-tag">+${l.cards.length*XP.card}xp</span></div>`;
+      if(unlocked) n.onclick=()=>openLesson(l.id);
+      nodes.appendChild(n);
+    });
+    // boss node
+    const bUnlocked=isBossUnlocked(w), bDone=!!S.doneLessons["boss_"+w.id];
+    const b=document.createElement("button");
+    b.className="node boss"+(bUnlocked?"":" locked")+(bDone?" done":"");
+    b.innerHTML=`${bUnlocked?"":'<span class="lock-ic">🔒</span>'}
+      <div class="ix">👹 WORLD ${w.n} BOSS</div>
+      <div class="nm">${BOSSES[w.id].name.replace('Boss · ','')} Review</div>
+      <div class="ds">Beat the boss to unlock the next world.</div>
+      <div class="ft"><span class="candle-ic">${bDone?"🏆":(bUnlocked?"⚔️":"⚫")}</span>
+        <span class="st">${bDone?"Defeated":(bUnlocked?"Challenge":"Locked")}</span>
+        <span class="xp-tag" style="color:var(--violet)">+${XP.bossDone}xp</span></div>`;
+    if(bUnlocked) b.onclick=()=>openBoss(w.id);
+    nodes.appendChild(b);
+    wEl.appendChild(nodes); map.appendChild(wEl);
+  });
+}
+
+/* ============ LESSON PLAYER ============ */
+let cur=null; // {kind:'lesson'|'boss', lesson/boss, cards, idx}
+function openLesson(lid){
+  const {lesson}=lessonById(lid);
+  cur={kind:"lesson",id:lid,name:lesson.name,cards:lesson.cards,idx:0};
+  startPlayer();
+}
+function openBoss(wid){
+  const b=BOSSES[wid];
+  const cards=[{t:"intro",eb:"Boss Battle",ic:"👹",h:b.name.replace('Boss · ',''),
+    body:`<p class="lead">Quick-fire review. Answer everything to clear the world and unlock what's next.</p>
+    <p>No widgets, no notes — just what stuck.</p>`}]
+    .concat(b.q.map(x=>({t:"quiz",q:x.q,opts:x.opts,a:x.a,fb:x.fb})));
+  cur={kind:"boss",id:"boss_"+wid,name:b.name,cards,idx:0};
+  startPlayer();
+}
+function startPlayer(){
+  sessionXp=0; updateSessionXp();
+  $("#player").classList.add("on");
+  document.body.style.overflow="hidden";
+  renderDots(); renderCard();
+}
+function closePlayer(){
+  $("#player").classList.remove("on");
+  document.body.style.overflow="";
+  renderMap(); syncHud();
+}
+function renderDots(){
+  const d=$("#dots"); d.innerHTML="";
+  cur.cards.forEach((c,i)=>{
+    const e=document.createElement("i");
+    if(i<cur.idx) e.className="done"; else if(i===cur.idx) e.className="cur";
+    d.appendChild(e);
+  });
+}
+function updateSessionXp(){ $("#sessionXp").textContent="+"+sessionXp+" XP"; }
+
+let quizAnswered=false;
+function renderCard(){
+  const c=cur.cards[cur.idx];
+  const host=$("#cardHost");
+  renderDots();
+  quizAnswered=false;
+  const nb=$("#nextBtn");
+  nb.className="cta"+(cur.kind==="boss"?" boss":"");
+  nb.textContent = (cur.idx===cur.cards.length-1)?(cur.kind==="boss"?"Finish boss":"Complete lesson"):"Continue";
+
+  if(c.t==="quiz"){
+    host.innerHTML=`<div class="quiz">
+      <div class="eyebrow"><span class="ic">🧠</span> ${cur.kind==="boss"?"Boss question":"Quick check"}</div>
+      <h2>${c.q}</h2>
+      <div class="qopts">${c.opts.map((o,i)=>`<button class="qopt" data-i="${i}"><span class="key">${"ABCD"[i]}</span><span>${o}</span></button>`).join("")}</div>
+      <div class="qfb" id="qfb"></div></div>`;
+    nb.disabled=true;
+    host.querySelectorAll(".qopt").forEach(btn=>{
+      btn.onclick=()=>answerQuiz(parseInt(btn.dataset.i),c,btn);
+    });
+  } else {
+    let inner=`<div class="eyebrow"><span class="ic">${c.ic||"▦"}</span> ${c.eb||""}</div><h2>${c.h}</h2>${c.body||""}`;
+    host.innerHTML=inner;
+    nb.disabled=false;
+    if(c.widget){ const slot=document.createElement("div"); host.appendChild(slot); WIDGETS[c.widget](slot); }
+    // award card xp once
+    const uid=cur.id+"#"+cur.idx;
+    if(!S.doneCards[uid]){ S.doneCards[uid]=1; addXp(XP.card,false); }
+  }
+  host.scrollTop=0; $(".stage").scrollTop=0;
+}
+function answerQuiz(i,c,btn){
+  if(quizAnswered) return;
+  quizAnswered=true;
+  const opts=$("#cardHost").querySelectorAll(".qopt");
+  opts.forEach(o=>o.disabled=true);
+  const fb=$("#qfb");
+  const uid=cur.id+"#q#"+cur.idx;
+  const firstTry=!S.quizDone[uid];
+  if(i===c.a){
+    btn.classList.add("correct");
+    fb.className="qfb ok show"; fb.innerHTML=`<b>Correct.</b> ${c.fb}`;
+    if(!S.quizDone[uid]||S.quizDone[uid]!=="correct"){ addXp(firstTry?XP.quizFirst:XP.quizRetry,false); }
+    S.quizDone[uid]="correct";
+  } else {
+    btn.classList.add("wrong");
+    opts[c.a].classList.add("correct");
+    fb.className="qfb no show"; fb.innerHTML=`<b>Not quite.</b> ${c.fb}`;
+    if(!S.quizDone[uid]) S.quizDone[uid]="tried";
+  }
+  $("#nextBtn").disabled=false;
+  save();
+}
+function nextCard(){
+  if(cur.idx<cur.cards.length-1){ cur.idx++; renderCard(); }
+  else { finishUnit(); }
+}
+function finishUnit(){
+  const wasDone=!!S.doneLessons[cur.id];
+  S.doneLessons[cur.id]=1;
+  if(!wasDone){ addXp(cur.kind==="boss"?XP.bossDone:XP.lessonDone,true); }
+  save();
+  checkBadges();
+  // celebrate
+  closePlayer();
+}
+
+/* ============ XP / LEVEL / BADGES ============ */
+let pendingModals=[];
+function addXp(n, big){
+  const beforeLvl=lvlFor(S.xp);
+  S.xp+=n; sessionXp+=n; updateSessionXp();
+  const afterLvl=lvlFor(S.xp);
+  syncHud(); save();
+  if(afterLvl>beforeLvl){
+    pendingModals.push({type:"lvl",lvl:afterLvl,rank:RANKS[afterLvl-1][1]});
+  }
+}
+const BADGES=[
+  {id:"first",emoji:"🪙",name:"First Contract",cond:()=>S.doneLessons.l1,desc:"You learned the original derivative."},
+  {id:"lev",emoji:"⚡",name:"Leverage Lord",cond:()=>S.doneLessons.l4,desc:"You tamed the double-edged sword."},
+  {id:"margin",emoji:"🏦",name:"Margin Master",cond:()=>S.doneLessons["boss_w3"],desc:"SPAN, M2M, RMS — all conquered."},
+  {id:"short",emoji:"🔻",name:"Short Seller",cond:()=>S.doneLessons.l8,desc:"You can profit when markets fall."},
+  {id:"contango",emoji:"📐",name:"Contango Kid",cond:()=>S.doneLessons.l10,desc:"Fair value & arbitrage decoded."},
+  {id:"hedge",emoji:"🛡️",name:"Hedge Hog",cond:()=>S.doneLessons.l11,desc:"You can fence off a portfolio."},
+  {id:"oi",emoji:"🔮",name:"OI Oracle",cond:()=>S.doneLessons.l12,desc:"You read the open-interest tape."},
+  {id:"delivery",emoji:"📦",name:"Delivery Done",cond:()=>S.doneLessons.l13,desc:"Physical settlement holds no fear."},
+  {id:"streak3",emoji:"🔥",name:"Hot Streak",cond:()=>S.streak>=3,desc:"3-day learning streak."},
+  {id:"quant",emoji:"🐋",name:"Quant Whale",cond:()=>worldLessonIds(WORLDS[4]).every(id=>S.doneLessons[id])&&S.doneLessons["boss_w5"],desc:"You finished the entire module."},
+];
+function checkBadges(){
+  BADGES.forEach(b=>{
+    if(!S.badges[b.id] && b.cond()){
+      S.badges[b.id]=1;
+      pendingModals.push({type:"badge",emoji:b.emoji,name:b.name,desc:b.desc});
+    }
+  });
+  save();
+  flushModals();
+}
+function flushModals(){
+  if(!pendingModals.length) return;
+  const m=pendingModals.shift();
+  const box=$("#modal");
+  if(m.type==="lvl"){
+    box.className="modal on lvl";
+    $("#mBig").textContent="⭐";
+    $("#mTitle").textContent="Level "+m.lvl+" — "+m.rank;
+    $("#mText").textContent="Your trading rank just leveled up. The desk respects you a little more.";
+    confetti(["#FFB627","#3DD6F5","#11E29B"]);
+  } else {
+    box.className="modal on badge";
+    $("#mBig").textContent=m.emoji;
+    $("#mTitle").textContent="Badge: "+m.name;
+    $("#mText").textContent=m.desc;
+    confetti(["#9A7BFF","#FFB627","#fff"]);
+  }
+}
+$("#mClose")?.addEventListener("click",()=>{
+  $("#modal").classList.remove("on");
+  if(pendingModals.length) setTimeout(flushModals,250);
+});
+
+/* confetti */
+function confetti(colors){
+  if(window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  const c=document.createElement("div"); c.className="conf"; document.body.appendChild(c);
+  for(let i=0;i<70;i++){
+    const p=document.createElement("i");
+    p.style.left=Math.random()*100+"vw";
+    p.style.background=colors[i%colors.length];
+    p.style.animationDuration=(1.6+Math.random()*1.6)+"s";
+    p.style.animationDelay=(Math.random()*.4)+"s";
+    p.style.transform="rotate("+Math.random()*360+"deg)";
+    c.appendChild(p);
+  }
+  setTimeout(()=>c.remove(),3600);
+}
+
+/* ============ WIDGETS ============ */
+const inr = n=>"₹"+Math.round(n).toLocaleString("en-IN");
+const sinr = n=>(n>=0?"+₹":"−₹")+Math.abs(Math.round(n)).toLocaleString("en-IN");
+const WIDGETS = {
+  forwardPayoff(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">🪙 Gold @ March expiry · locked ₹2,450/g</div>
+      <div class="wrow"><label>Gold price ₹/g</label><input type="range" id="fp" min="2000" max="2900" step="10" value="2700"><span class="wv" id="fpv">2,700</span></div>
+      <div class="wout"><div class="o"><div class="l">ABC (Buyer)</div><div class="v" id="abc"></div></div>
+      <div class="o"><div class="l">XYZ (Seller)</div><div class="v" id="xyz"></div></div></div>
+      <div style="font-size:12px;color:var(--ink-dim);margin-top:10px" id="fpnote"></div></div>`;
+    const fp=slot.querySelector("#fp");
+    const upd=()=>{
+      const p=+fp.value; slot.querySelector("#fpv").textContent=p.toLocaleString("en-IN");
+      const diff=(p-2450)*15000; // 15 kg = 15000 g
+      const abc=slot.querySelector("#abc"), xyz=slot.querySelector("#xyz");
+      abc.textContent=sinr(diff); abc.style.color=diff>=0?"var(--long)":"var(--short)";
+      xyz.textContent=sinr(-diff); xyz.style.color=diff<=0?"var(--long)":"var(--short)";
+      slot.querySelector("#fpnote").innerHTML = Math.abs(diff)<1 ? "Price = locked price → nobody wins, nobody loses." :
+        (diff>0?"Gold rose → ABC (buyer) saves money, XYZ (seller) loses.":"Gold fell → XYZ (seller) profits, ABC (buyer) overpays.");
+    };
+    fp.oninput=upd; upd();
+  },
+  leverageSim(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">⚡ Leverage simulator</div>
+      <div class="wrow"><label>Your capital</label><input class="winput" id="lcap" value="100000"></div>
+      <div class="wrow"><label>Contract value</label><input class="winput" id="lcv" value="295250"></div>
+      <div class="wrow"><label>Margin %</label><input type="range" id="lmp" min="8" max="30" value="14"><span class="wv" id="lmpv">14%</span></div>
+      <div class="wrow"><label>Underlying move</label><input type="range" id="lmv" min="-10" max="10" step="0.5" value="3"><span class="wv" id="lmvv">+3%</span></div>
+      <div class="wout">
+        <div class="o"><div class="l">Lots affordable</div><div class="v" id="llots" style="color:var(--cyan)"></div></div>
+        <div class="o"><div class="l">Exposure</div><div class="v" id="lexp"></div></div>
+        <div class="o"><div class="l">Leverage</div><div class="v" id="llev" style="color:var(--gold)"></div></div>
+        <div class="o"><div class="l">Your P&L</div><div class="v" id="lpnl"></div></div>
+      </div></div>`;
+    const g=id=>slot.querySelector(id);
+    const upd=()=>{
+      const cap=+g("#lcap").value||0, cv=+g("#lcv").value||1, mp=+g("#lmp").value, mv=+g("#lmv").value;
+      g("#lmpv").textContent=mp+"%"; g("#lmvv").textContent=(mv>=0?"+":"")+mv+"%";
+      const marginPer=cv*mp/100;
+      const lots=Math.floor(cap/marginPer);
+      const exposure=lots*cv;
+      const lev=(cv/marginPer);
+      const pnl=exposure*mv/100;
+      g("#llots").textContent=lots;
+      g("#lexp").textContent=inr(exposure);
+      g("#llev").textContent=lev.toFixed(1)+"×";
+      const pe=g("#lpnl"); pe.textContent=sinr(pnl); pe.style.color=pnl>=0?"var(--long)":"var(--short)";
+    };
+    ["#lcap","#lcv"].forEach(i=>g(i).oninput=upd);
+    ["#lmp","#lmv"].forEach(i=>g(i).oninput=upd); upd();
+  },
+  spreadBars(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">🃏 Bharat Forge — margin benefit</div>
+      <div class="svgwrap"><svg viewBox="0 0 320 150">
+        <line x1="40" y1="120" x2="310" y2="120" stroke="#1E2838"/>
+        <rect x="55" y="40" width="40" height="80" fill="#243042"/><text x="75" y="135" fill="#8493A8" font-size="9" text-anchor="middle" font-family="monospace">Jan</text><text x="75" y="34" fill="#E7EEF7" font-size="9" text-anchor="middle" font-family="monospace">37,362</text>
+        <rect x="115" y="40" width="40" height="80" fill="#243042"/><text x="135" y="135" fill="#8493A8" font-size="9" text-anchor="middle" font-family="monospace">Feb</text><text x="135" y="34" fill="#E7EEF7" font-size="9" text-anchor="middle" font-family="monospace">37,629</text>
+        <text x="185" y="84" fill="#FF4D6D" font-size="14" text-anchor="middle" font-family="monospace">VS</text>
+        <rect x="220" y="105" width="60" height="15" fill="#11E29B"/><text x="250" y="135" fill="#8493A8" font-size="9" text-anchor="middle" font-family="monospace">Spread</text><text x="250" y="99" fill="#11E29B" font-size="10" text-anchor="middle" font-family="monospace">7,213</text>
+      </svg></div>
+      <div style="font-size:13px;color:var(--ink-dim)">Separately: ₹74,991. Together (hedged): just <span class="k-long">₹7,213</span>. Margin benefit ≈ <span class="k-gold">₹67,658</span>.</div></div>`;
+  },
+  longShort(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">🎚️ Long / Short P&L</div>
+      <div class="toggle" id="lstog"><button class="on long" data-d="long">LONG</button><button data-d="short">SHORT</button></div>
+      <div class="wrow" style="margin-top:14px"><label>Entry price</label><input class="winput" id="lsent" value="1990"></div>
+      <div class="wrow"><label>Exit price</label><input type="range" id="lsexit" min="1900" max="2080" value="1950"><span class="wv" id="lsexv">1,950</span></div>
+      <div class="wrow"><label>Quantity</label><input class="winput" id="lsqty" value="125"></div>
+      <div class="wout"><div class="o" style="grid-column:1/-1"><div class="l">Profit / Loss</div><div class="v" id="lspnl" style="font-size:24px"></div></div></div></div>`;
+    const g=id=>slot.querySelector(id); let dir="short";
+    const upd=()=>{
+      const ent=+g("#lsent").value, ex=+g("#lsexit").value, qty=+g("#lsqty").value;
+      g("#lsexv").textContent=ex.toLocaleString("en-IN");
+      const pnl=(dir==="long"?(ex-ent):(ent-ex))*qty;
+      const e=g("#lspnl"); e.textContent=sinr(pnl); e.style.color=pnl>=0?"var(--long)":"var(--short)";
+    };
+    slot.querySelectorAll("#lstog button").forEach(b=>b.onclick=()=>{
+      dir=b.dataset.d;
+      slot.querySelectorAll("#lstog button").forEach(x=>x.className=x.dataset.d==="long"?"":"");
+      b.className="on "+dir; upd();
+    });
+    g("#lsexit").oninput=upd; g("#lsent").oninput=upd; g("#lsqty").oninput=upd; upd();
+  },
+  m2mShort(slot){
+    const rows=[["01 · short",1990,1982,1000],["02",1982,1975,875],["03",1975,1980,-625],["04",1980,1989,-1125],["05",1989,1970,2375],["06 · cover",1970,1965,625]];
+    slot.innerHTML=`<div class="widget"><div class="wtitle">📉 HCL short · lot 125 · tap rows</div>
+      <table class="tbl" id="m2mt"><tr><th>Day</th><th>Ref</th><th>Close</th><th>M2M</th></tr>
+      ${rows.map((r,i)=>`<tr data-i="${i}" style="cursor:pointer"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="m2mc">···</td></tr>`).join("")}
+      </table>
+      <div class="wout"><div class="o" style="grid-column:1/-1"><div class="l">Running total</div><div class="v" id="m2mtot" style="color:var(--long)">+₹0</div></div></div>
+      <div style="font-size:12px;color:var(--ink-dim);margin-top:10px">Check: (1990 − 1965) × 125 = <span class="k-long">₹3,125</span></div></div>`;
+    let total=0;
+    slot.querySelectorAll("#m2mt tr[data-i]").forEach(tr=>{
+      tr.onclick=()=>{
+        if(tr.dataset.done) return; tr.dataset.done=1;
+        const v=rows[+tr.dataset.i][3];
+        const cell=tr.querySelector(".m2mc");
+        cell.textContent=(v>=0?"+":"−")+Math.abs(v).toLocaleString("en-IN");
+        cell.className=v>=0?"pos":"neg";
+        total+=v; const t=slot.querySelector("#m2mtot");
+        t.textContent=(total>=0?"+":"−")+"₹"+Math.abs(total).toLocaleString("en-IN"); t.style.color=total>=0?"var(--long)":"var(--short)";
+      };
+    });
+  },
+  impactCost(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">🧮 Infosys · buy 350 shares</div>
+      <table class="tbl"><tr><th>Best buy</th><th>Best sell</th></tr><tr><td>₹1,657.95</td><td>₹1,658.00</td></tr></table>
+      <button class="qopt" id="icbtn" style="justify-content:center"><span>Reveal impact cost ▸</span></button>
+      <div id="icout" style="display:none">
+        <table class="tbl" style="margin-top:12px">
+          <tr><td>Ideal price (mid)</td><td>₹1,657.98</td></tr>
+          <tr><td>Actual buy price</td><td>₹1,658.19</td></tr>
+          <tr><td>Impact cost</td><td class="pos">0.012%</td></tr>
+        </table>
+        <div style="font-size:12px;color:var(--ink-dim);margin-top:8px">Tiny → Infosys is highly liquid. Nifty's is even lower, ≈ 0.0082%.</div>
+      </div></div>`;
+    slot.querySelector("#icbtn").onclick=function(){ slot.querySelector("#icout").style.display="block"; this.style.display="none"; };
+  },
+  pricingCalc(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">📐 Futures fair value</div>
+      <div class="wrow"><label>Spot price</label><input class="winput" id="pcs" value="2280.5"></div>
+      <div class="wrow"><label>Days to expiry</label><input type="range" id="pcd" min="1" max="90" value="7"><span class="wv" id="pcdv">7</span></div>
+      <div class="wrow"><label>Risk-free %</label><input type="range" id="pcr" min="3" max="10" step="0.05" value="8.35"><span class="wv" id="pcrv">8.35%</span></div>
+      <div class="wrow"><label>Dividend</label><input class="winput" id="pcdiv" value="0"></div>
+      <div class="wrow"><label>Market price</label><input class="winput" id="pcm" value="2284"></div>
+      <div class="wout">
+        <div class="o"><div class="l">Fair value</div><div class="v" id="pcfv" style="color:var(--cyan)"></div></div>
+        <div class="o"><div class="l">Basis vs market</div><div class="v" id="pcb"></div></div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-dim);margin-top:10px" id="pcnote"></div></div>`;
+    const g=id=>slot.querySelector(id);
+    const upd=()=>{
+      const s=+g("#pcs").value, d=+g("#pcd").value, r=+g("#pcr").value, div=+g("#pcdiv").value, m=+g("#pcm").value;
+      g("#pcdv").textContent=d; g("#pcrv").textContent=r+"%";
+      const fv=s*(1+(r/100)*(d/365))-div;
+      g("#pcfv").textContent=fv.toFixed(1);
+      const basis=m-fv;
+      const be=g("#pcb"); be.textContent=(basis>=0?"+":"")+basis.toFixed(1); be.style.color=Math.abs(basis)<0.5?"var(--ink)":(basis>0?"var(--long)":"var(--short)");
+      g("#pcnote").innerHTML = m>fv? "Market &gt; fair → futures at a <span class='k-long'>premium</span> (contango)." :
+        m<fv? "Market &lt; fair → futures at a <span class='k-short'>discount</span> (backwardation)." : "Bang on fair value.";
+    };
+    ["#pcs","#pcdiv","#pcm"].forEach(i=>g(i).oninput=upd);
+    ["#pcd","#pcr"].forEach(i=>g(i).oninput=upd); upd();
+  },
+  arbTable(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">💸 Cash & carry · buy spot 653, sell futures 700</div>
+      <table class="tbl"><tr><th>Expiry</th><th>Spot (long)</th><th>Futures (short)</th><th>Net</th></tr>
+      <tr><td>675</td><td class="pos">+22</td><td class="pos">+25</td><td class="pos">+47</td></tr>
+      <tr><td>645</td><td class="neg">−8</td><td class="pos">+55</td><td class="pos">+47</td></tr>
+      <tr><td>715</td><td class="pos">+62</td><td class="neg">−15</td><td class="pos">+47</td></tr></table>
+      <div style="font-size:13px;color:var(--ink-dim)">Wherever it expires, you bank <span class="k-long">+47</span>. That's the locked spread — risk-free arbitrage.</div></div>`;
+  },
+  portfolioHedge(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">🛡️ Portfolio hedge calculator</div>
+      <div class="wrow"><label>Portfolio value</label><input class="winput" id="phv" value="800000"></div>
+      <div class="wrow"><label>Portfolio beta</label><input type="range" id="phb" min="0.3" max="2" step="0.01" value="1.22"><span class="wv" id="phbv">1.22</span></div>
+      <div class="wrow"><label>Nifty level</label><input class="winput" id="phn" value="${MKT.nifty.replace(/,/g,'')}"></div>
+      <div class="wrow"><label>Nifty lot</label><input class="winput" id="phl" value="${MKT.lot}"></div>
+      <div class="wout">
+        <div class="o"><div class="l">Hedge value</div><div class="v" id="phhv" style="color:var(--cyan)"></div></div>
+        <div class="o"><div class="l">Nifty contract</div><div class="v" id="phcv"></div></div>
+        <div class="o" style="grid-column:1/-1"><div class="l">Short this many lots</div><div class="v" id="phlots" style="color:var(--gold);font-size:22px"></div></div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-dim);margin-top:10px" id="phnote"></div></div>`;
+    const g=id=>slot.querySelector(id);
+    const upd=()=>{
+      const v=+g("#phv").value||0, b=+g("#phb").value, n=+g("#phn").value||1, l=+g("#phl").value||1;
+      g("#phbv").textContent=b.toFixed(2);
+      const hv=b*v, cv=n*l, lots=hv/cv;
+      g("#phhv").textContent=inr(hv); g("#phcv").textContent=inr(cv);
+      g("#phlots").textContent=lots.toFixed(2);
+      g("#phnote").innerHTML = lots<1 ? "Less than 1 lot → too small to hedge with futures. Use <span class='k-cyan'>options</span> instead." :
+        "Can't short "+lots.toFixed(2)+" lots — round to <b>"+Math.floor(lots)+"</b> (under-hedged) or <b>"+Math.ceil(lots)+"</b> (over-hedged). A perfect hedge is rarely possible.";
+    };
+    ["#phv","#phn","#phl"].forEach(i=>g(i).oninput=upd); g("#phb").oninput=upd; upd();
+  },
+  oiStory(slot){
+    const days=[
+      {d:"Mon",t:"Arjun +6, Varun +4, Neha −10",oi:10},
+      {d:"Tue",t:"Neha transfers 8 shorts to John",oi:10},
+      {d:"Wed",t:"John +7 shorts, Neha closes out",oi:15},
+      {d:"Thu",t:"Vikram sells 25, others load up",oi:30},
+      {d:"Fri",t:"Vikram squares off 20",oi:10},
+    ];
+    slot.innerHTML=`<div class="widget"><div class="wtitle">👥 Open Interest · the trading week</div>
+      <div class="svgwrap"><svg viewBox="0 0 320 130" id="oisvg">
+        <line x1="30" y1="105" x2="305" y2="105" stroke="#1E2838"/>
+        ${days.map((x,i)=>{const h=x.oi/30*70; const xx=45+i*55; return `<rect class="oibar" data-i="${i}" x="${xx-16}" y="${105-h}" width="32" height="${h}" rx="3" fill="#243042" opacity="0"/><text x="${xx}" y="120" fill="#8493A8" font-size="10" text-anchor="middle" font-family="monospace">${x.d}</text><text class="oival" data-i="${i}" x="${xx}" y="${105-h-5}" fill="#3DD6F5" font-size="10" text-anchor="middle" font-family="monospace" opacity="0">${x.oi}</text>`;}).join("")}
+      </svg></div>
+      <div id="oitxt" style="font-size:13px;color:var(--ink-dim);min-height:38px"></div>
+      <button class="qopt" id="oistep" style="justify-content:center;margin-top:6px"><span>Advance the day ▸</span></button></div>`;
+    let i=-1;
+    slot.querySelector("#oistep").onclick=()=>{
+      i++; if(i>=days.length){ i=-1; slot.querySelectorAll(".oibar,.oival").forEach(e=>e.setAttribute("opacity","0")); slot.querySelector("#oitxt").innerHTML="Reset. Tap to replay."; slot.querySelector("#oistep span").textContent="Advance the day ▸"; return; }
+      slot.querySelector(`.oibar[data-i="${i}"]`).setAttribute("opacity","1");
+      slot.querySelector(`.oibar[data-i="${i}"]`).setAttribute("fill", days[i].oi>=(days[i-1]?.oi||0)?"#11E29B":"#FF4D6D");
+      slot.querySelector(`.oival[data-i="${i}"]`).setAttribute("opacity","1");
+      slot.querySelector("#oitxt").innerHTML=`<b style="color:var(--ink)">${days[i].d}:</b> ${days[i].t} → OI = <span class="k-cyan">${days[i].oi}</span>`;
+      if(i===days.length-1) slot.querySelector("#oistep span").textContent="Replay ↺";
+    };
+  },
+  oiInterp(slot){
+    slot.innerHTML=`<div class="widget"><div class="wtitle">🔮 Price + OI interpreter</div>
+      <div class="wrow"><label>Price</label><div class="toggle" id="prT" style="flex:1"><button class="on long" data-v="up">▲ Up</button><button data-v="dn">▼ Down</button></div></div>
+      <div class="wrow"><label>Open Interest</label><div class="toggle" id="oiT" style="flex:1"><button class="on long" data-v="up">▲ Up</button><button data-v="dn">▼ Down</button></div></div>
+      <div class="wout"><div class="o" style="grid-column:1/-1"><div class="l">Trader reading</div><div class="v" id="oires" style="font-size:16px;color:var(--cyan)"></div></div></div></div>`;
+    let pr="up", oi="up";
+    const map={ "up_up":"Fresh longs building 🟢", "dn_dn":"Long unwinding (longs exiting)", "dn_up":"Fresh shorts building 🔴", "up_dn":"Short covering (shorts buying back)" };
+    const upd=()=>{ slot.querySelector("#oires").textContent=map[pr+"_"+oi]; };
+    const wire=(sel,set)=>slot.querySelectorAll(sel+" button").forEach(b=>b.onclick=()=>{
+      slot.querySelectorAll(sel+" button").forEach(x=>x.className="");
+      b.className="on "+(b.dataset.v==="up"?"long":"short"); set(b.dataset.v); upd();
+    });
+    wire("#prT",v=>pr=v); wire("#oiT",v=>oi=v); upd();
+  },
+};
+
+/* ============ SAVE (debounced) ============ */
+let saveT=null;
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>Store.save(S),250); }
+
+/* ============ INIT ============ */
+$("#nextBtn").onclick=nextCard;
+$("#closeP").onclick=closePlayer;
+$("#resetBtn").onclick=()=>{
+  if(confirm("Reset all XP, badges and progress? This can't be undone.")){
+    S={ xp:0, doneCards:{}, quizDone:{}, doneLessons:{}, badges:{}, streak:1, lastActive:todayStr() };
+    Store.save(S); syncHud(); renderMap();
+  }
+};
+
+// ticker
+(function(){
+  const items=[
+    ["NIFTY FUT","~"+MKT.nifty,"ti-up"],["LOT SIZE",MKT.lot,"ti-c"],["EXPIRY",MKT.expiry,"ti-n"],
+    ["BANKNIFTY LOT",MKT.bankniftyLot,"ti-c"],["SENSEX LOT",MKT.sensexLot,"ti-c"],
+    ["CONTRACT FLOOR",MKT.cvFloor,"ti-g"],["STOCK F&O","PHYSICALLY SETTLED","ti-up"],
+    ["WEEKLY","NIFTY · SENSEX ONLY","ti-n"],["LEVERAGE","DOUBLE-EDGED","ti-dn"],
+    ["SETTLE","M2M DAILY","ti-up"],["RULE","SELL FIRST, BUY LATER","ti-dn"]
+  ];
+  const html=items.map(x=>`<span><b class="ti-n">${x[0]}</b> <b class="${x[2]}">${x[1]}</b></span>`).join("");
+  $("#ticker").innerHTML=html+html;
+})();
+
+async function boot(){
+  const saved=await Store.load();
+  if(saved) S=Object.assign(S,saved);
+  // streak logic
+  const t=todayStr();
+  if(S.lastActive!==t){
+    if(S.lastActive===yesterdayStr()) S.streak=(S.streak||0)+1; else S.streak=1;
+    S.lastActive=t; Store.save(S);
+  }
+  syncHud(); renderMap(); checkBadges();
+}
+boot();
+</script>
+</body>
+</html>

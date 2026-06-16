@@ -5,9 +5,12 @@ import Wordmark from "./Wordmark.astro";
 <header class="nav">
   <div class="container nav__inner">
     <Wordmark size="md" href="/" />
-    <a href="/studio" class="nav__studio mono" rel="nofollow">
-      <span class="nav__dot" aria-hidden="true"></span>studio
-    </a>
+    <nav class="nav__links">
+      <a href="/dojo" class="nav__link mono">dojo</a>
+      <a href="/studio" class="nav__studio mono" rel="nofollow">
+        <span class="nav__dot" aria-hidden="true"></span>studio
+      </a>
+    </nav>
   </div>
 </header>
 
@@ -28,6 +31,19 @@ import Wordmark from "./Wordmark.astro";
     gap: var(--space-md);
     height: 68px;
   }
+  .nav__links {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  .nav__link {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+    color: var(--ink-3);
+    transition: color 200ms var(--ease);
+  }
+  .nav__link:hover { color: var(--violet-ink); }
   .nav__studio {
     display: inline-flex;
     align-items: center;
