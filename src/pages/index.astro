@@ -78,6 +78,23 @@ const showNote = c.creed_title.trim() !== "";
     )}
   </section>
 
+  <!-- ============ THE DOJO (the work beside the journal — a dark doorway) ============ -->
+  <section class="dojo container" aria-labelledby="dojo-h">
+    <a href="/dojo" class="dojo__card" data-reveal>
+      <div class="dojo__body">
+        <p class="dojo__eyebrow mono"><span class="dojo__dot" aria-hidden="true"></span>beside the journal — a place to build</p>
+        <h2 class="dojo__title" id="dojo-h">The Dojo</h2>
+        <p class="dojo__lead">
+          The journal is where I reckon with the day. The Dojo is where I put in
+          the hard hours — interactive labs that turn raw knowledge into something
+          I can actually use.
+        </p>
+        <p class="dojo__meta mono">Discipline 01 — trading futures, drilled until it sticks</p>
+      </div>
+      <span class="dojo__go mono">step into the dojo <span class="arrow">→</span></span>
+    </a>
+  </section>
+
   <!-- ============ THE STANDING NOTE (warm, first person — written in /studio) ============ -->
   {showNote && (
     <section class="note" aria-labelledby="note-h">
@@ -289,6 +306,99 @@ const showNote = c.creed_title.trim() !== "";
   .days__more:hover .days__more-go { color: var(--violet-ink); }
   .days__more-go .arrow { display: inline-block; transition: transform 240ms var(--ease); }
   .days__more:hover .days__more-go .arrow { transform: translateX(5px); }
+
+  /* ---------- THE DOJO (a dark doorway in the warm page) ---------- */
+  .dojo { margin-top: var(--space-xl); }
+  .dojo__card {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    padding: clamp(1.8rem, 1.2rem + 2.4vw, 3rem) clamp(1.4rem, 1rem + 2vw, 2.6rem);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(120% 140% at 100% 0%, #2a2118 0%, #1a1610 55%),
+      #17130d;
+    border: 1px solid #322a1e;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  /* a faint terminal-grid wash, echoing the Dojo's own backdrop */
+  .dojo__card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(#ffffff05 1px, transparent 1px),
+      linear-gradient(90deg, #ffffff05 1px, transparent 1px);
+    background-size: 34px 34px;
+    pointer-events: none;
+  }
+  .dojo__card:hover {
+    transform: translateY(-3px);
+    border-color: #54c79f55;
+    box-shadow: var(--shadow-lg);
+  }
+  .dojo__body { position: relative; max-width: 52ch; }
+  .dojo__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: var(--step--1);
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+    color: #b9a3ff;
+    margin-bottom: var(--space-sm);
+  }
+  .dojo__dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 100px;
+    background: #36d39a;
+    box-shadow: 0 0 10px #36d39a;
+    animation: dojo-pulse 2.4s var(--ease) infinite;
+  }
+  @keyframes dojo-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .dojo__title {
+    font-family: var(--font-display);
+    font-weight: 460;
+    font-size: var(--step-4);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    color: #f4f0e7;
+    margin: 0;
+  }
+  .dojo__lead {
+    margin-top: var(--space-md);
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: #d8cfbe;
+  }
+  .dojo__meta {
+    margin-top: var(--space-md);
+    font-size: var(--step--1);
+    letter-spacing: 0.04em;
+    color: #9a8f7b;
+  }
+  .dojo__go {
+    position: relative;
+    white-space: nowrap;
+    font-size: var(--step-0);
+    letter-spacing: 0.04em;
+    color: #f4f0e7;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid #54c79f66;
+  }
+  .dojo__go .arrow { display: inline-block; transition: transform 240ms var(--ease); }
+  .dojo__card:hover .dojo__go { color: #6ee0b4; }
+  .dojo__card:hover .dojo__go .arrow { transform: translateX(6px); }
+  @media (prefers-reduced-motion: reduce) {
+    .dojo__dot { animation: none; }
+  }
 
   /* ---------- THE STANDING NOTE ---------- */
   .note {
