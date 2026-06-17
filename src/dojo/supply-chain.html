@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Supply Chain — Chapter 1, Studied</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Spline+Sans+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#0c1320;          /* deep base */
+  --ink-2:#121b2d;        /* panel */
+  --ink-3:#1a2740;        /* raised panel */
+  --line:#2a3a57;         /* hairlines */
+  --line-soft:#1f2c44;
+  --fog:#8ea3c4;          /* muted text */
+  --fog-2:#b9c8e0;        /* secondary text */
+  --paper:#eaf0fb;        /* primary text */
+  --amber:#f5a623;        /* signal / routing accent */
+  --amber-soft:#3a2c12;
+  --amber-glow:rgba(245,166,35,.16);
+  --teal:#3fd0c9;         /* pull / live */
+  --teal-soft:#0f2e2d;
+  --rose:#ff6b6b;         /* failure / warning */
+  --rose-soft:#311419;
+  --push:#6f8fd0;         /* push */
+  --mint:#7ee0a8;         /* correct */
+  --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+  --r:14px;
+  --maxw:760px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 85% -5%, rgba(245,166,35,.07), transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, rgba(63,208,201,.05), transparent 55%),
+    var(--ink);
+  color:var(--paper);
+  font-family:'Inter',system-ui,sans-serif;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:120px;
+  overflow-x:hidden;
+}
+
+/* ---------- progress rail ---------- */
+#rail{
+  position:fixed;top:0;left:0;right:0;height:3px;background:transparent;z-index:200;
+}
+#rail-fill{height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--teal));transition:width .15s ease;box-shadow:0 0 12px var(--amber-glow)}
+
+/* ---------- top bar ---------- */
+header.top{
+  position:fixed;top:0;left:0;right:0;z-index:150;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 18px;
+  background:linear-gradient(180deg,rgba(12,19,32,.96),rgba(12,19,32,.78) 70%,transparent);
+  backdrop-filter:blur(8px);
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Spline Sans Mono',monospace;font-size:12.5px;letter-spacing:.5px;color:var(--fog-2)}
+.brand b{color:var(--paper);font-weight:600}
+.dojo-back{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fog);text-decoration:none;padding-right:10px;margin-right:2px;border-right:1px solid var(--line);transition:color .15s}
+.dojo-back:hover{color:var(--teal)}
+.chip-node{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px var(--amber-glow);animation:pulse 2.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--amber-glow)}50%{box-shadow:0 0 0 6px transparent}}
+.progress-read{font-family:'Spline Sans Mono',monospace;font-size:11.5px;color:var(--fog);text-align:right}
+.progress-read b{color:var(--amber);font-weight:600}
+
+/* ---------- layout ---------- */
+main{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+.hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;padding-top:60px}
+.eyebrow{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);margin-bottom:22px;display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--amber);opacity:.6}
+h1.title{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(40px,9vw,76px);line-height:.98;letter-spacing:-.02em;margin-bottom:8px}
+h1.title .flow{
+  background:linear-gradient(100deg,var(--amber),var(--teal));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  font-style:italic;
+}
+.subtitle{font-size:clamp(16px,2.4vw,19px);color:var(--fog-2);max-width:46ch;margin-top:18px;line-height:1.6}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px}
+.tag{font-family:'Spline Sans Mono',monospace;font-size:11.5px;color:var(--fog-2);border:1px solid var(--line);border-radius:30px;padding:6px 13px;background:var(--ink-2)}
+.tag b{color:var(--amber);font-weight:500}
+.scroll-hint{margin-top:48px;font-family:'Spline Sans Mono',monospace;font-size:11.5px;color:var(--fog);display:flex;align-items:center;gap:9px;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+/* hero schematic */
+.hero-schematic{margin-top:42px;width:100%}
+
+/* ---------- section scaffolding ---------- */
+section.unit{padding:64px 0 20px;scroll-margin-top:70px}
+.unit-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:8px}
+.unit-num{font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:600;color:var(--ink);background:var(--amber);border-radius:8px;padding:5px 9px;flex-shrink:0;margin-top:6px;letter-spacing:.5px}
+.unit-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,5vw,34px);line-height:1.08;letter-spacing:-.01em}
+.unit-tagline{color:var(--fog);font-size:14.5px;margin:6px 0 26px 50px;font-style:italic;font-family:'Fraunces',serif}
+
+.lede{font-size:17.5px;color:var(--fog-2);margin-bottom:22px;line-height:1.66}
+.lede strong{color:var(--paper);font-weight:600}
+p.body{font-size:15.5px;color:var(--fog-2);margin-bottom:16px}
+p.body strong{color:var(--paper);font-weight:600}
+.key-term{color:var(--amber);font-weight:600;font-style:normal}
+.key-term-teal{color:var(--teal);font-weight:600}
+
+/* ---------- expandable detail ---------- */
+.expand{border:1px solid var(--line);border-radius:var(--r);margin:18px 0;background:var(--ink-2);overflow:hidden;transition:border-color .2s}
+.expand:hover{border-color:#33486b}
+.expand summary{
+  list-style:none;cursor:pointer;padding:15px 18px;display:flex;align-items:center;gap:12px;
+  font-family:'Spline Sans Mono',monospace;font-size:13px;color:var(--fog-2);font-weight:500;user-select:none;
+}
+.expand summary::-webkit-details-marker{display:none}
+.expand summary .ico{
+  width:22px;height:22px;border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:.25s;color:var(--amber);font-size:15px;line-height:1;
+}
+.expand[open] summary .ico{transform:rotate(45deg);background:var(--amber);color:var(--ink);border-color:var(--amber)}
+.expand summary .lbl{flex:1}
+.expand summary .hint{font-size:11px;color:var(--fog);opacity:.8}
+.expand .inner{padding:2px 18px 20px;border-top:1px solid var(--line-soft)}
+.expand .inner p{font-size:14.5px;color:var(--fog-2);margin:14px 0 0}
+.expand .inner p:first-child{margin-top:16px}
+.expand .inner strong{color:var(--paper)}
+.expand .inner ul{margin:12px 0 0 2px;list-style:none}
+.expand .inner li{font-size:14px;color:var(--fog-2);padding:5px 0 5px 22px;position:relative}
+.expand .inner li::before{content:"→";position:absolute;left:0;color:var(--amber);font-family:'Spline Sans Mono',monospace}
+
+/* ---------- callouts ---------- */
+.callout{border-radius:var(--r);padding:18px 20px;margin:20px 0;border:1px solid var(--line);background:var(--ink-2);position:relative}
+.callout .co-label{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.callout p{font-size:14.5px;color:var(--fog-2);margin:0}
+.callout p strong{color:var(--paper)}
+.callout.key{border-left:3px solid var(--amber);background:linear-gradient(100deg,var(--amber-soft),var(--ink-2) 55%)}
+.callout.key .co-label{color:var(--amber)}
+.callout.reality{border-left:3px solid var(--teal);background:linear-gradient(100deg,var(--teal-soft),var(--ink-2) 60%)}
+.callout.reality .co-label{color:var(--teal)}
+.dot-live{width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse2 1.8s infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.3}}
+.src{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--fog);margin-top:10px;opacity:.75}
+.src a{color:var(--fog);text-decoration:underline;text-decoration-color:var(--line)}
+
+/* ---------- flip cards ---------- */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.flip{height:150px;perspective:1000px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+.flip.flipped .flip-in{transform:rotateY(180deg)}
+.flip-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;justify-content:center;background:var(--ink-3)}
+.flip-front{align-items:flex-start}
+.flip-front .fc-num{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--amber);margin-bottom:auto}
+.flip-front .fc-term{font-family:'Fraunces',serif;font-size:19px;font-weight:600;line-height:1.15}
+.flip-front .fc-tap{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--fog);margin-top:8px;opacity:.7}
+.flip-back{transform:rotateY(180deg);background:linear-gradient(150deg,var(--ink-3),var(--amber-soft));border-color:#3d4f72}
+.flip-back p{font-size:13px;color:var(--fog-2);line-height:1.5}
+
+/* ---------- recall check ---------- */
+.recall{border:1px dashed var(--line);border-radius:var(--r);padding:18px 20px;margin:22px 0;background:rgba(26,39,64,.4)}
+.recall .rc-q{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--fog);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.recall .rc-prompt{font-size:16px;color:var(--paper);font-weight:500;margin-bottom:16px;font-family:'Fraunces',serif}
+.rc-opts{display:flex;flex-direction:column;gap:9px}
+.rc-opt{
+  text-align:left;border:1px solid var(--line);background:var(--ink-2);color:var(--fog-2);
+  padding:12px 15px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14.5px;
+  transition:.18s;display:flex;align-items:center;gap:11px;width:100%;
+}
+.rc-opt:hover:not(:disabled){border-color:#3a5279;background:var(--ink-3)}
+.rc-opt .mk{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--fog);width:18px;flex-shrink:0}
+.rc-opt.correct{border-color:var(--mint);background:rgba(126,224,168,.1);color:var(--paper)}
+.rc-opt.correct .mk{color:var(--mint)}
+.rc-opt.wrong{border-color:var(--rose);background:rgba(255,107,107,.08);opacity:.75}
+.rc-opt.wrong .mk{color:var(--rose)}
+.rc-opt:disabled{cursor:default}
+.rc-explain{font-size:13.5px;color:var(--fog-2);margin-top:14px;padding:12px 14px;border-radius:9px;background:var(--ink-2);border-left:2px solid var(--mint);display:none}
+.rc-explain.show{display:block;animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.rc-explain b{color:var(--mint)}
+
+/* ---------- diagrams ---------- */
+.diagram{margin:24px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--ink-2);padding:22px 18px;overflow:hidden}
+.diagram .dg-cap{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--fog);text-transform:uppercase;margin-top:14px;text-align:center}
+.diagram svg{display:block;width:100%;height:auto;overflow:visible}
+.node-rect{fill:var(--ink-3);stroke:var(--line)}
+.node-lbl{fill:var(--paper);font-family:'Spline Sans Mono',monospace;font-weight:500}
+.node-sub{fill:var(--fog);font-family:'Spline Sans Mono',monospace}
+
+/* dash flow animation */
+.flowline{stroke-dasharray:6 7;animation:dash 1.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-26}}
+.flowline.rev{animation:dashrev 1.6s linear infinite}
+@keyframes dashrev{to{stroke-dashoffset:26}}
+
+/* ---------- equation block ---------- */
+.equation{display:flex;align-items:stretch;justify-content:center;gap:0;flex-wrap:wrap;margin:8px 0 4px}
+.eq-term{flex:1;min-width:130px;border-radius:12px;padding:16px 14px;text-align:center;border:1px solid var(--line);background:var(--ink-3)}
+.eq-term .eq-name{font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--fog);margin-bottom:6px}
+.eq-term .eq-val{font-family:'Fraunces',serif;font-size:18px;font-weight:600;line-height:1.15}
+.eq-op{display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:30px;color:var(--amber);padding:0 8px;font-weight:400}
+.eq-term.surplus{border-color:var(--amber);background:linear-gradient(150deg,var(--amber-soft),var(--ink-3))}
+.eq-term.surplus .eq-val{color:var(--amber)}
+
+/* ---------- push/pull interactive ---------- */
+.pp-wrap{border:1px solid var(--line);border-radius:var(--r);background:var(--ink-2);padding:22px 18px;margin:24px 0}
+.pp-track{position:relative;height:96px;margin:20px 0 8px;border-radius:10px;overflow:hidden;display:flex}
+.pp-zone{height:100%;display:flex;align-items:center;justify-content:center;transition:flex-basis .35s cubic-bezier(.4,.2,.2,1);position:relative;overflow:hidden}
+.pp-push{background:linear-gradient(135deg,rgba(111,143,208,.22),rgba(111,143,208,.08))}
+.pp-pull{background:linear-gradient(135deg,rgba(63,208,201,.2),rgba(63,208,201,.06))}
+.pp-zlabel{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:600;letter-spacing:1px;text-align:center;z-index:2;padding:0 8px}
+.pp-push .pp-zlabel{color:var(--push)}
+.pp-pull .pp-zlabel{color:var(--teal)}
+.pp-zlabel small{display:block;font-weight:400;font-size:10px;color:var(--fog);margin-top:3px;letter-spacing:.3px;text-transform:none}
+.pp-boundary{width:3px;background:var(--amber);position:relative;z-index:3;box-shadow:0 0 14px var(--amber-glow)}
+.pp-boundary::after{content:"⇄ customer order";position:absolute;top:-19px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'Spline Sans Mono',monospace;font-size:9.5px;color:var(--amber)}
+.pp-slider{width:100%;margin:6px 0 4px;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:var(--line);outline:none}
+.pp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--amber);cursor:pointer;border:3px solid var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.pp-slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--amber);cursor:pointer;border:3px solid var(--ink)}
+.pp-readout{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.pp-stat{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--ink-3)}
+.pp-stat .ps-lbl{font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--fog);margin-bottom:6px}
+.pp-stat .ps-bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:6px}
+.pp-stat .ps-fill{height:100%;border-radius:4px;transition:width .35s ease}
+.pp-stat .ps-val{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--paper)}
+.pp-scenario{margin-top:16px;padding:13px 15px;border-radius:10px;background:var(--ink-3);border-left:2px solid var(--amber);font-size:14px;color:var(--fog-2);min-height:42px}
+.pp-scenario b{color:var(--paper)}
+.pp-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pp-preset{font-family:'Spline Sans Mono',monospace;font-size:11.5px;border:1px solid var(--line);background:var(--ink-3);color:var(--fog-2);padding:7px 12px;border-radius:30px;cursor:pointer;transition:.18s}
+.pp-preset:hover,.pp-preset.active{border-color:var(--amber);color:var(--amber)}
+
+/* ---------- case files ---------- */
+.casegrid{display:flex;flex-direction:column;gap:14px;margin:22px 0}
+.case{border:1px solid var(--line);border-radius:var(--r);background:var(--ink-2);overflow:hidden;transition:.2s}
+.case:hover{border-color:#33486b}
+.case-head{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;user-select:none}
+.case-glyph{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:15px;background:var(--ink-3);border:1px solid var(--line)}
+.case-meta{flex:1;min-width:0}
+.case-name{font-family:'Fraunces',serif;font-size:19px;font-weight:600;line-height:1.1}
+.case-tease{font-size:12.5px;color:var(--fog);font-family:'Spline Sans Mono',monospace;margin-top:2px}
+.case-toggle{font-family:'Spline Sans Mono',monospace;color:var(--amber);font-size:20px;transition:.25s;flex-shrink:0}
+.case.open .case-toggle{transform:rotate(45deg)}
+.case-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.case-body-in{padding:0 18px 20px;border-top:1px solid var(--line-soft)}
+.case-body-in p{font-size:14.5px;color:var(--fog-2);margin-top:14px}
+.case-body-in p strong{color:var(--paper)}
+.case-q{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.case-q .cq-h{font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--amber);margin-bottom:9px}
+.case-q ul{list-style:none}
+.case-q li{font-size:13.5px;color:var(--fog-2);padding:5px 0 5px 20px;position:relative}
+.case-q li::before{content:"?";position:absolute;left:0;color:var(--amber);font-family:'Spline Sans Mono',monospace;font-weight:600}
+
+/* ---------- macro process ---------- */
+.macro{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin:22px 0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.macro-col{padding:16px 14px;border-right:1px solid var(--line-soft)}
+.macro-col:last-child{border-right:none}
+.macro-col .mc-tag{font-family:'Spline Sans Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:4px}
+.macro-col.srm .mc-tag{color:var(--push)}
+.macro-col.iscm .mc-tag{color:var(--amber)}
+.macro-col.crm .mc-tag{color:var(--teal)}
+.macro-col .mc-full{font-size:11px;color:var(--fog);margin-bottom:10px;line-height:1.3}
+.macro-col ul{list-style:none}
+.macro-col li{font-size:12px;color:var(--fog-2);padding:3px 0 3px 13px;position:relative;font-family:'Spline Sans Mono',monospace}
+.macro-col li::before{content:"·";position:absolute;left:2px;color:var(--fog)}
+.macro-flow{display:flex;align-items:center;justify-content:space-between;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--fog);padding:8px 14px;background:var(--ink-3);border-top:1px solid var(--line-soft);grid-column:1/-1}
+
+/* ---------- finish ---------- */
+.finish{text-align:center;padding:70px 0 30px}
+.finish .fin-mark{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--amber);text-transform:uppercase}
+.finish h2{font-family:'Fraunces',serif;font-size:clamp(28px,6vw,42px);font-weight:900;margin:14px 0;line-height:1.05}
+.finish p{color:var(--fog-2);max-width:42ch;margin:0 auto 26px}
+.recap{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin-top:30px}
+.recap-item{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--ink-2)}
+.recap-item .ri-n{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--amber)}
+.recap-item .ri-t{font-family:'Fraunces',serif;font-size:15px;font-weight:600;margin:3px 0 5px}
+.recap-item .ri-d{font-size:12.5px;color:var(--fog)}
+
+/* ---------- footer ---------- */
+footer{max-width:var(--maxw);margin:40px auto 0;padding:24px 20px;border-top:1px solid var(--line-soft);font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--fog);line-height:1.7}
+footer b{color:var(--fog-2)}
+
+@media (max-width:560px){
+  .macro{grid-template-columns:1fr}
+  .macro-col{border-right:none;border-bottom:1px solid var(--line-soft)}
+  .recap{grid-template-columns:1fr}
+  .eq-op{padding:4px 0;width:100%}
+  .equation{flex-direction:column}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div id="rail"><div id="rail-fill"></div></div>
+<header class="top">
+  <div class="brand"><a class="dojo-back" href="/dojo">← dojo</a><span class="chip-node"></span><span><b>SUPPLY&nbsp;CHAIN</b>&nbsp;/ ch.01</span></div>
+  <div class="progress-read"><b id="pct">0%</b> routed<br><span id="sec-name" style="opacity:.7">understanding the chain</span></div>
+</header>
+
+<main>
+<!-- ============ HERO ============ -->
+<section class="hero" id="start">
+  <div class="eyebrow">Chopra · Meindl · Kalra — Chapter One</div>
+  <h1 class="title">Everything is a<br><span class="flow">flow.</span></h1>
+  <p class="subtitle">A can of detergent on a Walmart shelf is the visible end of a vast, invisible network — product, information, and money moving in both directions. This chapter is the map. Let's route through it.</p>
+  <div class="hero-meta">
+    <span class="tag"><b>8</b> units</span>
+    <span class="tag"><b>~25</b> min</span>
+    <span class="tag">full text · preserved</span>
+    <span class="tag">+ <b>2026</b> reality checks</span>
+  </div>
+  <div class="hero-schematic">
+    <svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" aria-label="Supply chain stages from supplier to customer">
+      <!-- connecting line -->
+      <line x1="70" y1="60" x2="630" y2="60" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="70" y1="60" x2="630" y2="60" stroke="var(--amber)" stroke-width="1.5" class="flowline" opacity=".8"/>
+      <!-- nodes -->
+      <g font-family="Spline Sans Mono" font-size="10">
+        <g><circle cx="70" cy="60" r="16" fill="var(--ink-3)" stroke="var(--push)" stroke-width="1.5"/><text x="70" y="64" text-anchor="middle" fill="var(--push)" font-weight="600">S</text><text x="70" y="95" text-anchor="middle" fill="var(--fog)">supplier</text></g>
+        <g><circle cx="210" cy="60" r="16" fill="var(--ink-3)" stroke="var(--fog-2)" stroke-width="1.5"/><text x="210" y="64" text-anchor="middle" fill="var(--fog-2)" font-weight="600">M</text><text x="210" y="95" text-anchor="middle" fill="var(--fog)">maker</text></g>
+        <g><circle cx="350" cy="60" r="16" fill="var(--ink-3)" stroke="var(--fog-2)" stroke-width="1.5"/><text x="350" y="64" text-anchor="middle" fill="var(--fog-2)" font-weight="600">D</text><text x="350" y="95" text-anchor="middle" fill="var(--fog)">distributor</text></g>
+        <g><circle cx="490" cy="60" r="16" fill="var(--ink-3)" stroke="var(--fog-2)" stroke-width="1.5"/><text x="490" y="64" text-anchor="middle" fill="var(--fog-2)" font-weight="600">R</text><text x="490" y="95" text-anchor="middle" fill="var(--fog)">retailer</text></g>
+        <g><circle cx="630" cy="60" r="16" fill="var(--ink-3)" stroke="var(--teal)" stroke-width="1.5"/><text x="630" y="64" text-anchor="middle" fill="var(--teal)" font-weight="600">C</text><text x="630" y="95" text-anchor="middle" fill="var(--fog)">customer</text></g>
+      </g>
+      <text x="70" y="22" font-family="Spline Sans Mono" font-size="9.5" fill="var(--amber)">▸ product flows downstream</text>
+      <text x="630" y="38" text-anchor="end" font-family="Spline Sans Mono" font-size="9.5" fill="var(--teal)">funds + info flow back ◂</text>
+    </svg>
+  </div>
+  <div class="scroll-hint">↓ &nbsp;scroll to begin routing</div>
+</section>
+<!-- ============ UNIT 01 ============ -->
+<section class="unit" id="u1" data-name="what is a supply chain">
+  <div class="unit-head"><span class="unit-num">01</span><h2 class="unit-title">What a supply chain actually is</h2></div>
+  <p class="unit-tagline">Not a chain. A web.</p>
+
+  <p class="lede">A supply chain is <strong>every party involved, directly or indirectly, in filling a customer request</strong> — not just the manufacturer and suppliers, but transporters, warehouses, retailers, and the customer too.</p>
+
+  <p class="body">Walk into Walmart for detergent and the chain is already humming: the store is stocked from a distribution center, which is stocked by the manufacturer (P&amp;G), which buys raw materials and packaging (from firms like Pactiv) — which themselves have lower-tier suppliers. The customer isn't outside this system. The customer <strong>starts</strong> it.</p>
+
+  <div class="callout key">
+    <div class="co-label">⬡ Core idea</div>
+    <p>The word "chain" is misleading. A maker takes material from many suppliers and ships to many distributors, so most chains are really <strong>networks</strong> — a supply <em>web</em>. And three things flow through it, in <strong>both directions</strong>: product, information, and funds.</p>
+  </div>
+
+  <div class="diagram">
+    <svg viewBox="0 0 680 150" xmlns="http://www.w3.org/2000/svg" aria-label="Three flows moving in both directions">
+      <defs>
+        <marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--amber)"/></marker>
+        <marker id="arrowL" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="var(--teal)"/></marker>
+      </defs>
+      <rect x="40" y="50" width="120" height="48" rx="9" class="node-rect"/><text x="100" y="79" text-anchor="middle" class="node-lbl" font-size="13">SUPPLIER</text>
+      <rect x="280" y="50" width="120" height="48" rx="9" class="node-rect"/><text x="340" y="79" text-anchor="middle" class="node-lbl" font-size="13">FIRM</text>
+      <rect x="520" y="50" width="120" height="48" rx="9" class="node-rect"/><text x="580" y="79" text-anchor="middle" class="node-lbl" font-size="13">CUSTOMER</text>
+      <!-- product downstream -->
+      <line x1="162" y1="62" x2="278" y2="62" stroke="var(--amber)" stroke-width="2" marker-end="url(#arrowR)" class="flowline"/>
+      <line x1="402" y1="62" x2="518" y2="62" stroke="var(--amber)" stroke-width="2" marker-end="url(#arrowR)" class="flowline"/>
+      <!-- funds + info upstream -->
+      <line x1="278" y1="86" x2="162" y2="86" stroke="var(--teal)" stroke-width="2" marker-end="url(#arrowL)" class="flowline rev"/>
+      <line x1="518" y1="86" x2="402" y2="86" stroke="var(--teal)" stroke-width="2" marker-end="url(#arrowL)" class="flowline rev"/>
+      <text x="340" y="28" text-anchor="middle" fill="var(--amber)" font-family="Spline Sans Mono" font-size="11">product ▸</text>
+      <text x="340" y="125" text-anchor="middle" fill="var(--teal)" font-family="Spline Sans Mono" font-size="11">◂ funds &amp; information (orders, POS data, pricing)</text>
+    </svg>
+    <div class="dg-cap">Fig 1 — the three flows, both directions</div>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">The five stages &amp; why some are skipped</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p>A typical chain runs through five kinds of stage — but not every chain has all of them:</p>
+      <ul>
+        <li><strong>Customers</strong> — the only source of revenue and where every chain begins</li>
+        <li><strong>Retailers</strong> — e.g. the Walmart store</li>
+        <li><strong>Wholesalers / distributors</strong> — break bulk, aggregate, deliver</li>
+        <li><strong>Manufacturers</strong> — P&amp;G in the detergent example</li>
+        <li><strong>Component / raw-material suppliers</strong> — and their lower-tier suppliers</li>
+      </ul>
+      <p><strong>Dell runs two structures at once.</strong> For servers it <em>builds to order</em> and sells direct — no retailer, distributor, or wholesaler. For PCs and tablets it sells through retailers like Walmart who hold inventory, adding an extra stage. Same company, two chains, because customer needs differ.</p>
+    </div>
+  </details>
+
+  <div class="recall" data-recall>
+    <div class="rc-q">⬡ recall check · optional</div>
+    <div class="rc-prompt">Why do the authors say "supply web" is more accurate than "supply chain"?</div>
+    <div class="rc-opts">
+      <button class="rc-opt" data-correct="false"><span class="mk">A</span>Because webs are stronger than chains</button>
+      <button class="rc-opt" data-correct="true"><span class="mk">B</span>Because each stage usually connects to many others, not just one</button>
+      <button class="rc-opt" data-correct="false"><span class="mk">C</span>Because the internet now runs all supply chains</button>
+    </div>
+    <div class="rc-explain">A "chain" implies one player per stage. In reality a manufacturer draws from <b>several</b> suppliers and ships to <b>several</b> distributors — the structure is a network, so "web" fits better.</div>
+  </div>
+
+  <div class="callout reality">
+    <div class="co-label"><span class="dot-live"></span>Reality check · 2026</div>
+    <p>The flows are now mostly digital and instant. When you tap "buy" on Amazon, point-of-sale data races upstream through ~<strong>1,200+ logistics facilities</strong> worldwide, and inside the warehouse <strong>over 1 million robots</strong> now help fulfil roughly three-quarters of US orders — the same product/information/funds flows the textbook describes, just automated end to end.</p>
+    <div class="src">Sources: MWPVL / Business Insider warehouse-robot data, 2025</div>
+  </div>
+</section>
+
+<!-- ============ UNIT 02 ============ -->
+<section class="unit" id="u2" data-name="historical perspective">
+  <div class="unit-head"><span class="unit-num">02</span><h2 class="unit-title">Where it came from</h2></div>
+  <p class="unit-tagline">Three rivers, one delta.</p>
+
+  <p class="lede">Modern supply chain management is the <strong>confluence of three streams</strong> of practice that evolved separately over ~60 years, then fused under the pressure of intense competition.</p>
+
+  <div class="flipgrid" data-flipgrid>
+    <div class="flip" data-flip><div class="flip-in">
+      <div class="flip-face flip-front"><div class="fc-num">stream 01</div><div class="fc-term">Sourcing &amp; Procurement</div><div class="fc-tap">tap to flip</div></div>
+      <div class="flip-face flip-back"><p>Grew out of <strong>purchasing</strong>. Cutting procurement price boosts profit far more easily than chasing equivalent extra sales. Today: sourcing, supplier relationships, inbound logistics.</p></div>
+    </div></div>
+    <div class="flip" data-flip><div class="flip-in">
+      <div class="flip-face flip-front"><div class="fc-num">stream 02</div><div class="fc-term">Materials Management</div><div class="fc-tap">tap to flip</div></div>
+      <div class="flip-face flip-back"><p>Forecasting, inventory, warehousing, scheduling → production planning. Materials are ~<strong>60%</strong> of most products' cost, so managing their flow became <em>the</em> route to cost reduction.</p></div>
+    </div></div>
+    <div class="flip" data-flip><div class="flip-in">
+      <div class="flip-face flip-front"><div class="fc-num">stream 03</div><div class="fc-term">Logistics &amp; Distribution</div><div class="fc-tap">tap to flip</div></div>
+      <div class="flip-face flip-back"><p>From military origins: moving goods to the right place at the right time. Transport is up to <strong>50%</strong> of logistics cost. Drucker called distribution "today's frontier."</p></div>
+    </div></div>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">How the streams merged — and the key numbers</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p><strong>Procurement</strong> became a top-management, strategic function because of its direct hit on cash flow and profit. A footnoted example: in an industry working on a 10% net margin where logistics is ~60% of cost, a firm would need ₹4 of extra <em>sales</em> to match the profit gained by cutting ₹1 off the <em>procurement price</em>.</p>
+      <p><strong>Materials management</strong> absorbed production planning/control (becoming "extended"), then order processing ("integrated"). India recognised its cost-reduction power in the 1970s, making the merger with purchasing an "obvious business compulsion."</p>
+      <p><strong>Logistics</strong> emerged as the cross-functional integrator — purchasing, inventory, production control, inbound traffic, warehousing, quality control — once firms saw the trade-off between transportation choices and inventory policy. The authors call business logistics "the early avatar of supply chain management." It sits at both ends: <strong>inbound</strong> and <strong>outbound</strong>, with intracompany movement called <em>manufacturing logistics</em>.</p>
+    </div>
+  </details>
+
+  <div class="callout reality">
+    <div class="co-label"><span class="dot-live"></span>Reality check · 2026</div>
+    <p>That "early avatar" framing looks prophetic. The 2020–24 era — COVID, the <strong>Ever Given</strong> blocking the Suez for six days (≈$10bn/day of trade stalled), Red Sea attacks cutting Suez traffic ~75%, a Panama Canal drought slashing capacity ~36% — turned logistics from a back-office function into a boardroom and front-page topic, exactly the integrative, strategic discipline this section anticipated.</p>
+    <div class="src">Sources: Allianz Research; CSIS; ScienceDirect (Maritime Economics), 2024</div>
+  </div>
+</section>
+
+<!-- ============ UNIT 03 ============ -->
+<section class="unit" id="u3" data-name="the objective: surplus">
+  <div class="unit-head"><span class="unit-num">03</span><h2 class="unit-title">The one equation</h2></div>
+  <p class="unit-tagline">Grow the pie, don't fight over slices.</p>
+
+  <p class="lede">Every supply chain has one objective: <strong>maximise the total value it generates</strong> — the <span class="key-term">supply chain surplus</span>.</p>
+
+  <div class="diagram" style="padding:24px 16px">
+    <div class="equation">
+      <div class="eq-term surplus"><div class="eq-name">Supply Chain Surplus</div><div class="eq-val">the whole pie</div></div>
+      <div class="eq-op">=</div>
+      <div class="eq-term"><div class="eq-name">Customer Value</div><div class="eq-val">what it's worth to them</div></div>
+      <div class="eq-op">−</div>
+      <div class="eq-term"><div class="eq-name">Supply Chain Cost</div><div class="eq-val">cost to fill the request</div></div>
+    </div>
+    <div class="dg-cap">Fig 2 — the surplus equation</div>
+  </div>
+
+  <p class="body">Buy a wireless router for <strong>$60</strong> at Best Buy. That $60 is the <em>only</em> money entering the chain — the customer is the single source of revenue. Everything else (Best Buy paying suppliers, suppliers paying makers) is just funds <em>moving around inside</em> the chain. The gap between the $60 and the total cost to produce and deliver the router is <span class="key-term">supply chain profitability</span> — the profit shared across all stages.</p>
+
+  <div class="callout key">
+    <div class="co-label">⬡ Core idea</div>
+    <p>Measure success by <strong>total chain profitability, not the profit of any single stage</strong>. Optimising one stage in isolation can shrink the whole pie. Grow the surplus and every member can benefit.</p>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">Consumer surplus &amp; the US-vs-India distributor puzzle</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p><strong>Consumer surplus</strong> is the slice the customer keeps — the gap between what they'd <em>maximally</em> pay and the price they actually paid. Hard to measure (a man stranded in a desert might trade his estate for water), but generic vs. branded drug prices make it visible: same relief, far lower price, so the difference is measurable surplus.</p>
+      <p><strong>Why distributors thrive in India but fade in the US:</strong> US retail is consolidated — big chains buy at such scale that adding a distributor mostly adds cost. India has millions of tiny outlets needing frequent, small replenishment. A distributor who takes a full truckload, breaks bulk, runs "milk runs" to many shops, stocks many manufacturers' goods, and handles collection cheaply <em>grows</em> the surplus. As Indian retail consolidates, the surplus argument predicts the distributor's role will shrink.</p>
+    </div>
+  </details>
+
+  <div class="recall" data-recall>
+    <div class="rc-q">⬡ recall check · optional</div>
+    <div class="rc-prompt">A chain has only one true source of revenue. Who?</div>
+    <div class="rc-opts">
+      <button class="rc-opt" data-correct="false"><span class="mk">A</span>The manufacturer</button>
+      <button class="rc-opt" data-correct="false"><span class="mk">B</span>The distributor</button>
+      <button class="rc-opt" data-correct="true"><span class="mk">C</span>The customer</button>
+    </div>
+    <div class="rc-explain">The <b>customer</b> is the only one providing positive cash flow. Every other payment is just funds being passed between stages that happen to have different owners.</div>
+  </div>
+
+  <div class="callout reality">
+    <div class="co-label"><span class="dot-live"></span>Reality check · 2026</div>
+    <p>The consumer-surplus engine the chapter describes is now a national export story. India's pharmaceutical exports reached about <strong>$30.5bn in FY2024–25</strong> — up from the ~$11bn the textbook cites — supplying roughly <strong>a fifth of the world's generics</strong> and nearly <strong>half of all US generic prescriptions</strong> by volume. The price gap between a patented drug and its generic equivalent is the surplus, and it scaled into an industry.</p>
+    <div class="src">Sources: India Commerce Ministry / PIB; IBEF, Dec 2025</div>
+  </div>
+</section>
+<!-- ============ UNIT 04 ============ -->
+<section class="unit" id="u4" data-name="why decisions decide survival">
+  <div class="unit-head"><span class="unit-num">04</span><h2 class="unit-title">Win or die by the chain</h2></div>
+  <p class="unit-tagline">Five companies. The chain decided their fate.</p>
+
+  <p class="lede">Supply chain design, planning, and operation <strong>directly shape whether a firm survives</strong>. Tap each to see how its chain made or broke it.</p>
+
+  <div class="casegrid" data-casegrid>
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--mint)">▲</div><div class="case-meta"><div class="case-name">Walmart</div><div class="case-tease">won · superior design from day one</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>Invested early in transport and information infrastructure. Built <strong>clusters of stores around distribution centers</strong> for cheap, frequent replenishment, and pioneered information-sharing with suppliers. Result: matching supply to demand better than rivals.</p>
+        <p>The textbook's figure: ~<strong>$17bn net income on ~$469bn revenue</strong> (2013), from just $1bn of sales in 1980 — a 20%+ compounded growth rate.</p>
+      </div></div>
+    </div>
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--mint)">▲</div><div class="case-meta"><div class="case-name">Seven-Eleven Japan</div><div class="case-tease">won · ruthless responsiveness</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>A very responsive replenishment system plus an outstanding information system meant products were available exactly when and where customers wanted them — even <strong>changing the merchandise mix by time of day</strong> to match demand.</p>
+        <p>Grew from ¥1bn (1974) to ~<strong>¥1.9 trillion (2013)</strong>, ¥222bn profit.</p>
+      </div></div>
+    </div>
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--rose)">▼</div><div class="case-meta"><div class="case-name">Webvan</div><div class="case-tease">died · couldn't beat the supermarket on cost</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>Big warehouses in major cities, delivering groceries to homes. Traditional supermarkets bring full truckloads to a store near you and let <em>you</em> do the picking — very low cost. Webvan turned inventory only marginally faster but bore <strong>high transport + labour (picking) costs</strong>.</p>
+        <p>Folded in <strong>2001</strong>, two years after a successful IPO.</p>
+      </div></div>
+    </div>
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--rose)">▼</div><div class="case-meta"><div class="case-name">Borders</div><div class="case-tease">died · failed to adapt to Amazon</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>Dominated the 1990s with the superstore concept — ~100,000 titles vs &lt;10,000 at local shops, with higher inventory turns. Then Amazon offered even more variety at lower cost from a few DCs, selling online. Borders <strong>couldn't adapt its chain</strong>.</p>
+        <p>Sales fell from ~$4bn (2004, $132m profit) to <strong>$2.8bn by 2009</strong> with a $109m loss.</p>
+      </div></div>
+    </div>
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--amber)">◆</div><div class="case-meta"><div class="case-name">Dell</div><div class="case-tease">adapted · had to rebuild a winning chain</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>1993–2006: spectacular growth from selling <strong>direct</strong> and postponing final assembly until the order arrived — huge variety, low component inventory. By 2006: $3.5bn+ net income on $56bn+ revenue.</p>
+        <p>Then the market shifted to <strong>less</strong> customization. Dell adapted — selling through Walmart and GOME, outsourcing assembly, building to stock. Unlike Borders, it kept reshaping the chain.</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="callout key">
+    <div class="co-label">⬡ Key point</div>
+    <p>Design, planning, and operation play a significant role in a firm's success or failure. <strong>To stay competitive, supply chains must adapt to changing technology and customer expectations.</strong></p>
+  </div>
+
+  <div class="callout reality">
+    <div class="co-label"><span class="dot-live"></span>Reality check · 2026</div>
+    <p>The adapt-or-die pattern keeps running. <strong>Dell</strong> reinvented itself again, riding the AI-server wave to revenues around <strong>$95–113bn</strong> with infrastructure-group sales surging on AI demand. <strong>Seven &amp; i Holdings</strong> (Seven-Eleven's parent) went through a major 2025 restructuring, spinning off weaker units to defend its convenience-store core. The chain you build is never "done."</p>
+    <div class="src">Sources: Dell FY25 results; Seven &amp; i Holdings corporate filings, 2025</div>
+  </div>
+</section>
+
+<!-- ============ UNIT 05 ============ -->
+<section class="unit" id="u5" data-name="three decision phases">
+  <div class="unit-head"><span class="unit-num">05</span><h2 class="unit-title">Three phases of every decision</h2></div>
+  <p class="unit-tagline">Years, then months, then minutes.</p>
+
+  <p class="lede">Chain decisions sort into three phases by <strong>how often they're made</strong> and <strong>how long their impact lasts</strong>. Each phase sets the constraints for the next.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg" aria-label="Three nested decision phases">
+      <!-- design -->
+      <rect x="30" y="20" width="620" height="200" rx="12" fill="none" stroke="var(--amber)" stroke-width="1.5" opacity=".9"/>
+      <text x="48" y="44" fill="var(--amber)" font-family="Spline Sans Mono" font-size="13" font-weight="600">① STRATEGY / DESIGN</text>
+      <text x="48" y="62" fill="var(--fog)" font-family="Spline Sans Mono" font-size="10.5">horizon: years · expensive to change</text>
+      <!-- planning -->
+      <rect x="60" y="78" width="560" height="128" rx="10" fill="none" stroke="var(--push)" stroke-width="1.5" opacity=".9"/>
+      <text x="78" y="102" fill="var(--push)" font-family="Spline Sans Mono" font-size="13" font-weight="600">② PLANNING</text>
+      <text x="78" y="120" fill="var(--fog)" font-family="Spline Sans Mono" font-size="10.5">horizon: quarter to a year · config is fixed</text>
+      <!-- operation -->
+      <rect x="92" y="134" width="496" height="58" rx="9" fill="rgba(63,208,201,.07)" stroke="var(--teal)" stroke-width="1.5"/>
+      <text x="110" y="158" fill="var(--teal)" font-family="Spline Sans Mono" font-size="13" font-weight="600">③ OPERATION</text>
+      <text x="110" y="176" fill="var(--fog)" font-family="Spline Sans Mono" font-size="10.5">horizon: days, hours, minutes · least uncertainty</text>
+    </svg>
+    <div class="dg-cap">Fig 3 — each phase nests inside the constraints of the one above</div>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">① Strategy / Design — the multi-year bets</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p>Decides the chain's <strong>configuration</strong> for years ahead: outsource or in-house? where to put plants and warehouses, and how big? what's made or stored where? which transport modes on which legs? what information systems?</p>
+      <p>Example: <strong>PepsiCo buying two of its largest bottlers in 2009</strong> — a strategic/design decision to integrate the beverage business for faster innovation and more responsive distribution. Hard and costly to reverse, so it must absorb years of market uncertainty. Firms should still revisit strategy and make mid-course corrections (e.g. Indian kiranas and malls reshaping around e-tailing; Amazon India's "Kirana Now" pilot for 2–4-hour delivery via neighbourhood stores).</p>
+    </div>
+  </details>
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">② Planning — the quarter-to-year policies</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p>Configuration is now <strong>fixed</strong>; planning works within it to maximise surplus over the horizon. Starts from a demand forecast for the coming year, plus costs and prices per market. Decisions: which markets are served from which locations, subcontracting, inventory policies, timing and size of promotions.</p>
+      <p>Example: <strong>ArcelorMittal</strong> deciding which markets a plant supplies and its target output. With better forecasts than the design phase, planners exploit the flexibility designed in.</p>
+    </div>
+  </details>
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">③ Operation — the daily order handling</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p>Config and planning policies are fixed; the goal is to handle each incoming order well. Allocate inventory/production to orders, set due dates, generate warehouse pick lists, assign shipping mode, set truck delivery schedules, place replenishment orders. Because the horizon is so short, <strong>demand uncertainty is lowest</strong> — so exploit that certainty to optimise.</p>
+    </div>
+  </details>
+
+  <div class="callout key">
+    <div class="co-label">⬡ Key point</div>
+    <p><strong>Design decisions constrain or enable good planning, which in turn constrains or enables effective operation.</strong> They're a hierarchy, not a list.</p>
+  </div>
+
+  <div class="recall" data-recall>
+    <div class="rc-q">⬡ recall check · optional</div>
+    <div class="rc-prompt">"Should we build a new warehouse and which transport modes will we use?" — which phase?</div>
+    <div class="rc-opts">
+      <button class="rc-opt" data-correct="true"><span class="mk">A</span>Strategy / design</button>
+      <button class="rc-opt" data-correct="false"><span class="mk">B</span>Planning</button>
+      <button class="rc-opt" data-correct="false"><span class="mk">C</span>Operation</button>
+    </div>
+    <div class="rc-explain">Facility locations, capacities, and transport-mode availability are <b>design</b> decisions — multi-year, expensive to reverse, made under the most uncertainty.</div>
+  </div>
+</section>
+<!-- ============ UNIT 06 ============ -->
+<section class="unit" id="u6" data-name="two ways to see the chain">
+  <div class="unit-head"><span class="unit-num">06</span><h2 class="unit-title">Two lenses on the same chain</h2></div>
+  <p class="unit-tagline">Cycles for operators. Push/pull for designers.</p>
+
+  <p class="lede">There are two ways to view chain processes. The <span class="key-term">cycle view</span> groups them into cycles between stages — good for <strong>operations</strong>. The <span class="key-term-teal">push/pull view</span> splits them by timing relative to the customer order — good for <strong>strategy</strong>.</p>
+
+  <h3 style="font-family:'Fraunces',serif;font-size:20px;margin:26px 0 6px">The cycle view: four handoffs</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 680 130" xmlns="http://www.w3.org/2000/svg" aria-label="Four supply chain cycles between five stages">
+      <g font-family="Spline Sans Mono" font-size="10.5">
+        <circle cx="60" cy="65" r="20" class="node-rect"/><text x="60" y="69" text-anchor="middle" class="node-lbl">CUST</text>
+        <circle cx="215" cy="65" r="20" class="node-rect"/><text x="215" y="69" text-anchor="middle" class="node-lbl">RETL</text>
+        <circle cx="370" cy="65" r="20" class="node-rect"/><text x="370" y="69" text-anchor="middle" class="node-lbl">DIST</text>
+        <circle cx="525" cy="65" r="20" class="node-rect"/><text x="525" y="69" text-anchor="middle" class="node-lbl">MAKR</text>
+        <circle cx="640" cy="65" r="20" class="node-rect"/><text x="640" y="69" text-anchor="middle" class="node-lbl">SUPP</text>
+      </g>
+      <g font-family="Spline Sans Mono" font-size="9.5" text-anchor="middle">
+        <path d="M82,55 Q137,30 193,55" fill="none" stroke="var(--teal)" stroke-width="1.5"/><text x="137" y="22" fill="var(--teal)">customer order</text>
+        <path d="M237,55 Q292,30 348,55" fill="none" stroke="var(--amber)" stroke-width="1.5"/><text x="292" y="22" fill="var(--amber)">replenishment</text>
+        <path d="M392,55 Q447,30 503,55" fill="none" stroke="var(--push)" stroke-width="1.5"/><text x="447" y="22" fill="var(--push)">manufacturing</text>
+        <path d="M547,75 Q593,108 620,80" fill="none" stroke="var(--fog-2)" stroke-width="1.5"/><text x="585" y="120" fill="var(--fog-2)">procurement</text>
+      </g>
+    </svg>
+    <div class="dg-cap">Fig 4 — a cycle sits at each interface between two stages</div>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">The six sub-processes &amp; what differs between cycles</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p>Each cycle has the same six sub-processes: supplier <strong>markets</strong> → buyer <strong>places order</strong> → supplier <strong>receives order</strong> → supplier <strong>supplies order</strong> → buyer <strong>receives supply</strong> → buyer <strong>returns</strong> reverse flows. These map to the source/make/deliver/return processes of the <strong>SCOR model</strong>.</p>
+      <p>Two real differences across cycles: <strong>(1)</strong> in the customer order cycle demand is external and uncertain; elsewhere orders can be projected from policy (a tire supplier knows demand once the carmaker's schedule is set). <strong>(2)</strong> Order size grows and order count falls as you move upstream — one customer buys one car; the dealer orders many; the maker orders far more tires. So information-sharing matters more the further you are from the end customer. ERP systems use this view.</p>
+    </div>
+  </details>
+
+  <h3 style="font-family:'Fraunces',serif;font-size:20px;margin:30px 0 6px">The push/pull view: drag the boundary</h3>
+  <p class="body"><span style="color:var(--push);font-weight:600">Push</span> = made in anticipation of orders (a forecast — speculative). <span style="color:var(--teal);font-weight:600">Pull</span> = made in response to a real order (reactive). The <span class="key-term">push/pull boundary</span> is where forecast hands off to actual demand. Move it and you trade inventory against responsiveness:</p>
+
+  <div class="pp-wrap" data-pushpull>
+    <div class="pp-track">
+      <div class="pp-zone pp-push" id="ppPush"><div class="pp-zlabel">PUSH<small>built to forecast</small></div></div>
+      <div class="pp-boundary"></div>
+      <div class="pp-zone pp-pull" id="ppPull"><div class="pp-zlabel">PULL<small>built to order</small></div></div>
+    </div>
+    <input type="range" min="0" max="100" value="55" class="pp-slider" id="ppSlider" aria-label="push pull boundary position">
+    <div class="pp-readout">
+      <div class="pp-stat"><div class="ps-lbl">inventory held</div><div class="ps-bar"><div class="ps-fill" id="ppInv" style="background:var(--rose)"></div></div><div class="ps-val" id="ppInvV">—</div></div>
+      <div class="pp-stat"><div class="ps-lbl">responsiveness to customer</div><div class="ps-bar"><div class="ps-fill" id="ppResp" style="background:var(--teal)"></div></div><div class="ps-val" id="ppRespV">—</div></div>
+    </div>
+    <div class="pp-scenario" id="ppScenario">Drag the boundary, or pick a real chain below.</div>
+    <div class="pp-presets">
+      <button class="pp-preset" data-pp="15">L.L. Bean</button>
+      <button class="pp-preset" data-pp="78">Ethan Allen</button>
+      <button class="pp-preset" data-pp="50">Paint (1980s)</button>
+      <button class="pp-preset" data-pp="72">Paint (1990s)</button>
+    </div>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">The worked examples in full: Bean, Allen &amp; paint</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p><strong>L.L. Bean (make-to-stock).</strong> All customer-order-cycle processes run <em>after</em> the order arrives — pull. Fulfilment draws from inventory built ahead of demand. Replenishment, manufacturing, and procurement cycles all run on forecast — push. Fabric is bought 6–9 months ahead; manufacturing starts 3–6 months before sale.</p>
+      <p><strong>Ethan Allen (build-to-order furniture).</strong> A customer order triggers production, so the manufacturing cycle is folded into the customer order cycle — all pull. But components are replenished on forecast, so the procurement cycle is push. Effectively just two cycles.</p>
+      <p><strong>Paint — moving the boundary paid off.</strong> Until the 1980s base production, colour mixing, and packing were all done in factories to forecast (all push), and the chain struggled to match supply to demand. In the 1990s, <strong>colour mixing moved to the store, after the order</strong> — pull. Base and packing stayed push. Result: customers always get their colour <em>and</em> total inventory fell. That's the goal — find the boundary that best matches supply and demand.</p>
+    </div>
+  </details>
+
+  <div class="callout reality">
+    <div class="co-label"><span class="dot-live"></span>Reality check · 2026</div>
+    <p>Shein pushed the boundary further toward pull than the textbook's examples imagined. It makes tiny test batches, watches what sells online, then <strong>produces winners on demand</strong> — reportedly launching on the order of <strong>1.5 million products</strong> in a year (dwarfing Zara's volumes). Almost pure pull. The flip side — overconsumption and waste — prompted France to pass a per-item <strong>ultra-fast-fashion tax</strong> in June 2025, showing the boundary choice now carries regulatory weight too.</p>
+    <div class="src">Sources: CrossDock Insights; Supply Chain Digital (French Senate bill), 2025</div>
+  </div>
+</section>
+
+<!-- ============ UNIT 07 ============ -->
+<section class="unit" id="u7" data-name="macro processes">
+  <div class="unit-head"><span class="unit-num">07</span><h2 class="unit-title">Three macro processes</h2></div>
+  <p class="unit-tagline">Supplier-side, inside, customer-side.</p>
+
+  <p class="lede">Zoom out and every chain process inside a firm falls into one of three <strong>macro processes</strong> — defined by which interface they sit at.</p>
+
+  <div class="macro">
+    <div class="macro-col srm">
+      <div class="mc-tag">◂ SRM</div>
+      <div class="mc-full">Supplier Relationship Mgmt — firm ↔ suppliers</div>
+      <ul><li>source</li><li>negotiate</li><li>buy</li><li>design collab</li><li>supply collab</li></ul>
+    </div>
+    <div class="macro-col iscm">
+      <div class="mc-tag">◆ ISCM</div>
+      <div class="mc-full">Internal Supply Chain Mgmt — inside the firm</div>
+      <ul><li>strategic planning</li><li>demand planning</li><li>supply planning</li><li>fulfilment</li><li>field service</li></ul>
+    </div>
+    <div class="macro-col crm">
+      <div class="mc-tag">CRM ▸</div>
+      <div class="mc-full">Customer Relationship Mgmt — firm ↔ customers</div>
+      <ul><li>market</li><li>price</li><li>sell</li><li>call center</li><li>order mgmt</li></ul>
+    </div>
+    <div class="macro-flow"><span>supplier</span><span style="color:var(--amber)">— product / information / funds —</span><span>customer</span></div>
+  </div>
+
+  <details class="expand">
+    <summary><span class="ico">+</span><span class="lbl">Each macro process, with the Grainger example</span><span class="hint">full text</span></summary>
+    <div class="inner">
+      <p><strong>CRM</strong> generates demand and handles orders — marketing, pricing, sales, order &amp; call-center management. At W.W. Grainger: catalogs, the website, the order/service call center.</p>
+      <p><strong>ISCM</strong> fulfils that demand on time and at lowest cost — production/storage capacity planning, demand &amp; supply plans, actual fulfilment. At Grainger: warehouse location and size, what each carries, inventory policy, picking/packing/shipping.</p>
+      <p><strong>SRM</strong> arranges and manages supply — evaluating and selecting suppliers, negotiating terms, sharing plans. At Grainger: supplier selection, price/delivery negotiation, sharing demand-supply plans, placing replenishment orders.</p>
+    </div>
+  </details>
+
+  <div class="callout key">
+    <div class="co-label">⬡ Key point</div>
+    <p>All three serve the same customer, so <strong>integration is crucial</strong>. The classic failure: marketing owns CRM, manufacturing owns ISCM, purchasing owns SRM — with little communication, and even different forecasts. That mismatch hurts supply-demand matching, frustrates customers, and raises cost. Structure the org to mirror the macro processes.</p>
+  </div>
+</section>
+<!-- ============ UNIT 08 ============ -->
+<section class="unit" id="u8" data-name="example chains">
+  <div class="unit-head"><span class="unit-num">08</span><h2 class="unit-title">The case files</h2></div>
+  <p class="unit-tagline">Eight real chains, and the questions they force.</p>
+
+  <p class="lede">The chapter closes with worked example chains. Each raises the strategic, planning, and operational questions you'd have to answer to design it. Tap to open the file — the original discussion questions are kept verbatim.</p>
+
+  <div class="casegrid" data-casegrid>
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph">GA</div><div class="case-meta"><div class="case-name">Gateway &amp; Apple</div><div class="case-tease">two journeys into retail</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p><strong>Gateway</strong> opened stores in the late 1990s that carried <em>no</em> finished-goods inventory — all PCs built to order and shipped. Stock peaked above $80 (1999), fell below $4 (2002); all retail closed by 2004; bought by Acer for $710m in 2007. <strong>Apple</strong>, opening stores from 2001, <em>always</em> carried inventory with limited variety — by 2013, 415+ stores, $20bn+ sales, $51.5m average revenue per store.</p>
+        <div class="case-q"><div class="cq-h">Discussion questions</div><ul>
+          <li>Why did Gateway carry no finished-goods inventory while Apple did?</li>
+          <li>Should a firm with retail stores carry finished-goods inventory? Which products suit inventory vs. build-to-order?</li>
+          <li>How does product variety affect required store inventory?</li>
+          <li>Is direct selling without stores always cheaper than selling with stores?</li>
+          <li>What explains Apple's retail success and Gateway's failure?</li>
+        </ul></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--teal)">ZA</div><div class="case-meta"><div class="case-name">Zara (Inditex)</div><div class="case-tease">responsiveness as a weapon</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>2012: ~€16bn sales, 6,000+ stores in ~86 countries. Cut the design-to-sales cycle from the industry's 6+ months to <strong>4–6 weeks</strong>, refreshing 75% of displays every 3–4 weeks. Uncertain-demand items made in Europe (Portugal/Spain), predictable ones in Asia; ~40% capacity in-house. 40%+ of finished-goods purchases happen <em>after</em> the season starts (vs &lt;20% typical). Eight Spanish DCs, 24–48h delivery.</p>
+        <div class="case-q"><div class="cq-h">Discussion questions</div><ul>
+          <li>What advantage does a very responsive chain give Zara?</li>
+          <li>Why both in-house and outsourced manufacturing? Why keep European capacity despite cheaper Asia?</li>
+          <li>Why source uncertain-demand items locally and predictable ones from Asia?</li>
+          <li>What's the advantage of replenishing stores multiple times a week?</li>
+          <li>Is Zara's responsive model better suited to online or retail sales?</li>
+        </ul></div>
+        <div class="callout reality" style="margin-top:16px"><div class="co-label"><span class="dot-live"></span>2026</div><p>Inditex hit ~<strong>€38.6bn sales and €5.9bn net income in 2024</strong> — more than double its textbook figure. But the "fast" crown moved on: Shein and Temu now out-iterate even Zara, and European fast-fashion has slowed enough that those rivals are taking share.</p><div class="src">CNBC / Inditex FY24; eMarketer, 2025</div></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph">GM</div><div class="case-meta"><div class="case-name">Grainger &amp; McMaster-Carr</div><div class="case-tease">MRO distribution, no manufacturing</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>Both sell maintenance-repair-operations supplies via catalog and web; neither manufactures. <strong>Grainger</strong>: several hundred US stores, 9 DCs, ~300,000 SKUs stocked. <strong>McMaster-Carr</strong>: ships almost everything, 5 DCs, ~500,000 SKUs. Pure distribution success built on supply chain skill.</p>
+        <div class="case-q"><div class="cq-h">Discussion questions</div><ul>
+          <li>How many DCs, and where?</li>
+          <li>Should all DCs carry all products?</li>
+          <li>What to stock vs. ship direct from the supplier?</li>
+          <li>What should Grainger carry in a store?</li>
+          <li>How to allocate markets to DCs? What if an order can't be fully filled — backup locations?</li>
+        </ul></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph">TY</div><div class="case-meta"><div class="case-name">Toyota</div><div class="case-tease">global vs. local production</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>Strategy: a factory in every market served. The core question is each plant's <em>capability</em> — local-only at one extreme, able-to-supply-everywhere at the other. After the 1996–97 Asian crisis, Toyota adopted <strong>"global complementation"</strong> so strong markets could export to weak ones. Parts commonality cut costs but bit back: a <strong>2009 recall of ~12 million cars</strong> over common parts hurt brand and finances.</p>
+        <div class="case-q"><div class="cq-h">Discussion questions</div><ul>
+          <li>Where to locate plants, with what flexibility and capacity?</li>
+          <li>Produce for all markets, or only specific contingency markets?</li>
+          <li>How to allocate markets to plants, and how often to revise?</li>
+          <li>How should the investment in flexibility be valued?</li>
+        </ul></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--amber)">AM</div><div class="case-meta"><div class="case-name">Amazon</div><div class="case-tease">online sales pioneer</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>Began filling orders from a distributor's books; added warehouses to react faster. By 2013: ~40 US + ~40 international warehouses; 2012 outbound shipping cost $5bn+. Pushed digital (Kindle), then expanded categories — acquiring Zappos in 2009 (huge variety: 121,000 product descriptions, 2.2m+ images) and diapers.com in 2010 (little variety, big shipping volume).</p>
+        <div class="case-q"><div class="cq-h">Discussion questions</div><ul>
+          <li>Why build more warehouses as it grows? How many, and where?</li>
+          <li>Should Amazon stock every product it sells?</li>
+          <li>What can bricks-and-mortar players gain from an online channel?</li>
+          <li>Online channel advantages/disadvantages for shoes vs. diapers?</li>
+          <li>For which products does online beat retail — and what characterises them?</li>
+        </ul></div>
+        <div class="callout reality" style="margin-top:16px"><div class="co-label"><span class="dot-live"></span>2026</div><p>The "~40 + 40 warehouses" of 2013 is now <strong>1,200+ logistics facilities</strong> and <strong>1M+ robots</strong>. Amazon answered its own "how many warehouses, where" question by pushing inventory ever closer to customers for same/next-day delivery.</p><div class="src">MWPVL / Business Insider, 2025</div></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph">MC</div><div class="case-meta"><div class="case-name">Macy's</div><div class="case-tease">omni-channel retailing</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>A seamless online-and-store experience: browse online, see it in store, or order online after seeing it. Crucially it's about <strong>fulfilment</strong> too — any channel can reach the whole assortment. By 2012, 292 stores could fulfil online orders or cover stockouts at other stores; buy-online-pickup-in-store and in-store returns of online buys.</p>
+        <div class="case-q"><div class="cq-h">Discussion questions</div><ul>
+          <li>Fill online orders from stores or fulfilment centers?</li>
+          <li>How to manage store inventory in an omni-channel setting?</li>
+          <li>Keep returns at the store or send to a fulfilment center?</li>
+        </ul></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--mint)">GO</div><div class="case-meta"><div class="case-name">Gopaljee</div><div class="case-tease">India · transforming traditional chains</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>An indigenous model for India's fragmented, small-scale sector. Modeled on GCMMF (Amul), Gopaljee pools the tiny output of small dairy farmers into organised scale. From a 1989 first plant to <strong>~1 million litres/day, ~125,000 farmers, 4,500 village societies</strong>. Grows by <strong>direct procurement — eliminating middlemen</strong> — trains farmers, uses UHT tech, and has expanded overseas to SE Asia-Pacific, the Middle East and Europe.</p>
+        <div class="case-q"><div class="cq-h">Issues to consider</div><ul>
+          <li>How can the model extend to other Indian/South-Asian business lines?</li>
+          <li>Which socio-economic features of South-Asian societies support sustainable chains?</li>
+          <li>How can existing distribution channels be transformed to maximise customer value?</li>
+          <li>How can indigenous SCM models integrate with global supply chains?</li>
+        </ul></div>
+      </div></div>
+    </div>
+
+    <div class="case" data-case>
+      <div class="case-head"><div class="case-glyph" style="color:var(--mint)">JR</div><div class="case-meta"><div class="case-name">Jaipur Rugs</div><div class="case-tease">India · a socioeconomic network</div></div><div class="case-toggle">+</div></div>
+      <div class="case-body"><div class="case-body-in">
+        <p>A medium-scale rug/carpet maker that links remote rural artisans to world markets, weaving corporate social responsibility into the chain's design. Sourcing/production spans <strong>eight Indian states</strong>; markets include the USA, Australia, Canada, Greece, Germany, Spain — product moving from thousands of village looms through leading retail chains to global buyers.</p>
+        <div class="case-q"><div class="cq-h">Points to discuss</div><ul>
+          <li>How can SMEs in the developing world use chains to deliver value <em>and</em> raise artisans' living standards?</li>
+          <li>How can middlemen be minimised to free artisans from exploitation and underpayment?</li>
+        </ul></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="callout reality">
+    <div class="co-label"><span class="dot-live"></span>Reality check · 2026</div>
+    <p>The case study's core claim — that <strong>consumer surplus drives chain performance</strong> — held up dramatically. Generic Gleevec from Indian makers sold for a fraction of Novartis' price; that surplus helped build an industry now exporting ~$30bn+/year, on which global health bodies (MSF, the Global Fund, PEPFAR, UNICEF) heavily rely. India still supplies roughly a fifth of the world's generics.</p>
+    <div class="src">Sources: India Commerce Ministry; IBEF; MSF Access Campaign</div>
+  </div>
+</section>
+
+<!-- ============ FINISH ============ -->
+<section class="finish" id="finish">
+  <div class="fin-mark">◇ route complete ◇</div>
+  <h2>You've mapped the whole chain.</h2>
+  <p>Here's the chapter in eight ideas. Tap any unit in the bar logic below to jump back.</p>
+  <div class="recap">
+    <div class="recap-item"><div class="ri-n">01</div><div class="ri-t">It's a web</div><div class="ri-d">All parties filling a request; product, info &amp; funds flow both ways.</div></div>
+    <div class="recap-item"><div class="ri-n">02</div><div class="ri-t">Three streams</div><div class="ri-d">Procurement + materials management + logistics fused into SCM.</div></div>
+    <div class="recap-item"><div class="ri-n">03</div><div class="ri-t">Surplus = value − cost</div><div class="ri-d">Grow total chain profit, not one stage's. Customer is sole revenue.</div></div>
+    <div class="recap-item"><div class="ri-n">04</div><div class="ri-t">Adapt or die</div><div class="ri-d">Walmart &amp; 7-Eleven won; Webvan &amp; Borders died; Dell adapted.</div></div>
+    <div class="recap-item"><div class="ri-n">05</div><div class="ri-t">Three phases</div><div class="ri-d">Design (years) → planning (months) → operation (days). Each constrains the next.</div></div>
+    <div class="recap-item"><div class="ri-n">06</div><div class="ri-t">Two lenses</div><div class="ri-d">Cycle view for operations; push/pull boundary for strategy.</div></div>
+    <div class="recap-item"><div class="ri-n">07</div><div class="ri-t">Three macro processes</div><div class="ri-d">SRM · ISCM · CRM — integration is everything.</div></div>
+    <div class="recap-item"><div class="ri-n">08</div><div class="ri-t">It plays out for real</div><div class="ri-d">From Apple stores to Jaipur looms — same principles, different chains.</div></div>
+  </div>
+</section>
+
+<footer>
+  <b>The Supply Chain — Chapter 1, Studied.</b><br>
+  Built from Chopra, Meindl &amp; Kalra, <i>Supply Chain Management: Strategy, Planning &amp; Operation</i> (Ch. 1). All definitions, figures and discussion questions are from the source text.<br>
+  "Reality check · 2026" cards add current figures from public sources (company filings, India Commerce Ministry, MWPVL, CNBC, CSIS) and are clearly marked as additions, not from the textbook.<br>
+  Tap any boxed "+" to expand full-text detail · recall checks are optional.<br><br>
+  <a href="/dojo" style="color:var(--teal);text-decoration:none;font-family:'Spline Sans Mono',monospace;letter-spacing:.06em">← back to the dojo</a>
+</footer>
+</main>
+<script>
+(function(){
+  "use strict";
+  /* ---- progress rail + section name ---- */
+  var rail=document.getElementById('rail-fill'),pct=document.getElementById('pct'),secName=document.getElementById('sec-name');
+  var units=Array.prototype.slice.call(document.querySelectorAll('section.unit, section.hero, section.finish'));
+  function onScroll(){
+    var h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    var p=max>0?Math.min(100,Math.round((h.scrollTop||window.pageYOffset)/max*100)):0;
+    rail.style.width=p+'%';pct.textContent=p+'%';
+    var mid=(window.pageYOffset||h.scrollTop)+window.innerHeight*0.35,cur=null;
+    for(var i=0;i<units.length;i++){if(units[i].offsetTop<=mid)cur=units[i];}
+    if(cur){var n=cur.getAttribute('data-name');if(n)secName.textContent=n;else if(cur.classList.contains('finish'))secName.textContent='route complete';}
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll);onScroll();
+
+  /* ---- recall checks ---- */
+  document.querySelectorAll('[data-recall]').forEach(function(box){
+    var opts=box.querySelectorAll('.rc-opt'),exp=box.querySelector('.rc-explain'),done=false;
+    opts.forEach(function(o){
+      o.addEventListener('click',function(){
+        if(done)return;done=true;
+        var right=o.getAttribute('data-correct')==='true';
+        o.classList.add(right?'correct':'wrong');
+        if(!right){opts.forEach(function(x){if(x.getAttribute('data-correct')==='true')x.classList.add('correct');});}
+        opts.forEach(function(x){x.disabled=true;});
+        exp.classList.add('show');
+      });
+    });
+  });
+
+  /* ---- flip cards ---- */
+  document.querySelectorAll('[data-flip]').forEach(function(c){
+    c.addEventListener('click',function(){c.classList.toggle('flipped');});
+    c.setAttribute('tabindex','0');
+    c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();c.classList.toggle('flipped');}});
+  });
+
+  /* ---- case files ---- */
+  document.querySelectorAll('[data-case]').forEach(function(c){
+    var head=c.querySelector('.case-head'),body=c.querySelector('.case-body');
+    head.addEventListener('click',function(){
+      var open=c.classList.toggle('open');
+      body.style.maxHeight=open?body.querySelector('.case-body-in').scrollHeight+40+'px':'0';
+    });
+  });
+
+  /* ---- push/pull interactive ---- */
+  var slider=document.getElementById('ppSlider');
+  if(slider){
+    var push=document.getElementById('ppPush'),pull=document.getElementById('ppPull'),
+        inv=document.getElementById('ppInv'),invV=document.getElementById('ppInvV'),
+        resp=document.getElementById('ppResp'),respV=document.getElementById('ppRespV'),
+        scen=document.getElementById('ppScenario'),presets=document.querySelectorAll('.pp-preset');
+    function label(v){return v<25?'very low':v<45?'low':v<60?'moderate':v<80?'high':'very high';}
+    function scenarioText(v){
+      if(v<=18)return '<b>Almost pure pull (L.L. Bean style):</b> the customer order cycle runs after the order arrives; everything upstream is built to forecast. Highest responsiveness, but inventory is held far ahead — fabric bought 6–9 months early.';
+      if(v<=40)return '<b>Pull-leaning:</b> more is made to order, so you carry less finished stock and react well to demand — but you need fast, flexible upstream capacity to avoid stockouts.';
+      if(v<=62)return '<b>Balanced (1980s paint):</b> base, mixing and packing all done to forecast in the factory. Convenient to produce, but the chain struggles to match the exact colours customers want.';
+      if(v<=80)return '<b>Pull-shifted (1990s paint / Ethan Allen):</b> move final steps — colour mixing, final assembly — past the order. Customers get exactly what they want and total inventory <i>falls</i>. The sweet spot the chapter celebrates.';
+      return '<b>Heavily pull:</b> almost nothing is finished until ordered. Maximum customisation and minimal finished-goods inventory — but lead times and upstream coordination become the binding constraint.';
+    }
+    function update(v){
+      push.style.flexBasis=v+'%';pull.style.flexBasis=(100-v)+'%';
+      // more push (higher v) => more inventory, less responsive
+      var invPct=v, respPct=100-v;
+      inv.style.width=invPct+'%';invV.textContent=label(invPct);
+      resp.style.width=respPct+'%';respV.textContent=label(respPct);
+      scen.innerHTML=scenarioText(v);
+    }
+    slider.addEventListener('input',function(){update(+slider.value);presets.forEach(function(p){p.classList.remove('active');});});
+    presets.forEach(function(p){
+      p.addEventListener('click',function(){
+        var v=+p.getAttribute('data-pp');slider.value=v;update(v);
+        presets.forEach(function(x){x.classList.remove('active');});p.classList.add('active');
+      });
+    });
+    update(+slider.value);
+  }
+})();
+</script>
+</body>
+</html>

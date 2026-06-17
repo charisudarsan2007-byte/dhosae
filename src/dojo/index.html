@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dojo — dhosae</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#080B11;
+  --panel:#10151F;
+  --panel-2:#161D2A;
+  --grid:#1E2838;
+  --ink:#E7EEF7;
+  --ink-dim:#8493A8;
+  --ink-faint:#566173;
+  --long:#11E29B;
+  --gold:#FFB627;
+  --cyan:#3DD6F5;
+  --violet:#9A7BFF;
+  --amber:#f5a623;
+  --teal:#3fd0c9;
+  --r:16px;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1100px 560px at 80% -8%, rgba(154,123,255,.10), transparent 60%),
+    radial-gradient(900px 520px at -10% 12%, rgba(61,214,245,.06), transparent 55%),
+    var(--void);
+  color:var(--ink);
+  font-family:var(--body);
+  line-height:1.55;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  /* faint terminal grid wash */
+  background-attachment:fixed;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(circle at 50% 30%,#000,transparent 78%);
+  mask-image:radial-gradient(circle at 50% 30%,#000,transparent 78%);
+  opacity:.14;
+}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:26px 20px 90px}
+
+/* ---------- top ---------- */
+.back{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;transition:color .15s}
+.back:hover{color:var(--cyan)}
+
+.head{margin:40px 0 14px}
+.eyebrow{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--long);box-shadow:0 0 0 4px rgba(17,226,155,.14);animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(17,226,155,.14)}50%{box-shadow:0 0 0 8px transparent}}
+h1{font-family:var(--disp);font-size:clamp(40px,9vw,72px);font-weight:700;line-height:.98;letter-spacing:-.02em;margin:16px 0 14px}
+.lead{max-width:54ch;color:var(--ink-dim);font-size:clamp(15px,2.2vw,17px)}
+.lead b{color:var(--ink);font-weight:600}
+
+.sep{display:flex;align-items:center;gap:14px;margin:40px 0 22px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+.sep::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--grid),transparent)}
+
+/* ---------- discipline cards ---------- */
+.disciplines{display:grid;gap:18px}
+.card{
+  position:relative;display:block;text-decoration:none;color:inherit;
+  border:1px solid var(--grid);border-radius:var(--r);
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  padding:24px 24px 22px;overflow:hidden;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1),border-color .22s,box-shadow .22s;
+}
+.card::before{
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;border-radius:3px;
+  background:var(--accent);box-shadow:0 0 18px var(--accent);opacity:.9;
+}
+.card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 55%,var(--grid));box-shadow:0 22px 50px -28px rgba(0,0,0,.8)}
+.card.soon{opacity:.62;pointer-events:none}
+.c-top{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.c-no{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.c-tag{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--grid);border-radius:30px;padding:4px 11px}
+.c-title{font-family:var(--disp);font-size:clamp(26px,5vw,34px);font-weight:700;letter-spacing:-.01em;margin:12px 0 8px}
+.c-desc{color:var(--ink-dim);font-size:14.5px;max-width:56ch}
+.c-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;flex-wrap:wrap}
+.c-stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);background:rgba(255,255,255,.03);border:1px solid var(--grid);border-radius:8px;padding:5px 10px}
+.stat b{color:var(--ink);font-weight:600}
+.go{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--accent);display:inline-flex;align-items:center;gap:7px}
+.go .arr{transition:transform .22s}
+.card:hover .go .arr{transform:translateX(6px)}
+
+.foot{margin-top:48px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}.card,.go .arr{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← dhosae</a>
+
+  <div class="head">
+    <div class="eyebrow"><span class="dot"></span>beside the journal — a place to build</div>
+    <h1>The Dojo</h1>
+    <p class="lead">The journal is where I reckon with the day. The Dojo is where I put in the reps — <b>a discipline drilled until it sticks</b>. Each one is a self-contained world: full text, live diagrams, recall checks. Step into one.</p>
+  </div>
+
+  <div class="sep">Disciplines</div>
+
+  <div class="disciplines">
+
+    <a class="card" href="/dojo/finance" style="--accent:var(--long)">
+      <div class="c-top">
+        <span class="c-no">Discipline 01</span>
+        <span class="c-tag">gamified · XP &amp; levels</span>
+      </div>
+      <h2 class="c-title">Finance</h2>
+      <p class="c-desc">Trading the futures market without losing your shirt — every concept, example and formula from Zerodha Varsity, re-cut into bite-size cards, live calculators and quick quizzes. Grounded in the 2026 market.</p>
+      <div class="c-foot">
+        <div class="c-stats">
+          <span class="stat"><b>13</b> lessons</span>
+          <span class="stat"><b>5</b> worlds + bosses</span>
+          <span class="stat">futures</span>
+        </div>
+        <span class="go">enter <span class="arr">→</span></span>
+      </div>
+    </a>
+
+    <a class="card" href="/dojo/supply-chain" style="--accent:var(--amber)">
+      <div class="c-top">
+        <span class="c-no">Discipline 02</span>
+        <span class="c-tag">full text · preserved</span>
+      </div>
+      <h2 class="c-title">Supply Chain</h2>
+      <p class="c-desc">Everything is a flow. The vast invisible network behind a product on the shelf — mapped from Chopra, Meindl &amp; Kalra, Chapter 1, with live push/pull sliders, case files and 2026 reality checks.</p>
+      <div class="c-foot">
+        <div class="c-stats">
+          <span class="stat"><b>8</b> units</span>
+          <span class="stat"><b>~25</b> min</span>
+          <span class="stat">chapter 1</span>
+        </div>
+        <span class="go">enter <span class="arr">→</span></span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="foot">THE DOJO · dhosae.in · educational only</div>
+</div>
+</body>
+</html>
