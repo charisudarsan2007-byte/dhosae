@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock — the watchtower · dhosae</title>
+<meta name="description" content="An alert-only watchtower over Indian markets: the instant a watchlisted company files a board-meeting announcement on BSE, a push lands. It never trades.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#080B11;
+  --panel:#10151F;
+  --panel-2:#161D2A;
+  --grid:#1E2838;
+  --ink:#E7EEF7;
+  --ink-dim:#8493A8;
+  --ink-faint:#566173;
+  --long:#11E29B;
+  --gold:#FFB627;
+  --cyan:#3DD6F5;
+  --violet:#9A7BFF;
+  --amber:#f5a623;
+  --red:#ff5d6c;
+  --r:16px;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1100px 560px at 80% -8%, rgba(61,214,245,.10), transparent 60%),
+    radial-gradient(900px 520px at -10% 12%, rgba(17,226,155,.06), transparent 55%),
+    var(--void);
+  color:var(--ink);
+  font-family:var(--body);
+  line-height:1.55;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-attachment:fixed;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(circle at 50% 30%,#000,transparent 78%);
+  mask-image:radial-gradient(circle at 50% 30%,#000,transparent 78%);
+  opacity:.14;
+}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:26px 20px 90px}
+
+/* ---------- top ---------- */
+.back{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;transition:color .15s}
+.back:hover{color:var(--cyan)}
+
+.head{margin:40px 0 14px}
+.eyebrow{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--long);box-shadow:0 0 0 4px rgba(17,226,155,.14);animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(17,226,155,.14)}50%{box-shadow:0 0 0 8px transparent}}
+h1{font-family:var(--disp);font-size:clamp(40px,9vw,72px);font-weight:700;line-height:.98;letter-spacing:-.02em;margin:16px 0 14px}
+.lead{max-width:58ch;color:var(--ink-dim);font-size:clamp(15px,2.2vw,17px)}
+.lead b{color:var(--ink);font-weight:600}
+
+.sep{display:flex;align-items:center;gap:14px;margin:44px 0 22px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+.sep::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--grid),transparent)}
+
+/* ---------- scope banner ---------- */
+.scope{
+  display:flex;gap:13px;align-items:flex-start;
+  border:1px solid color-mix(in srgb,var(--gold) 36%,var(--grid));
+  background:linear-gradient(180deg,rgba(255,182,39,.07),rgba(255,182,39,.02));
+  border-radius:var(--r);padding:16px 18px;margin-top:8px;
+}
+.scope .ic{font-size:18px;line-height:1.2}
+.scope p{font-size:13.5px;color:var(--ink-dim)}
+.scope b{color:var(--gold);font-weight:600}
+
+/* ---------- pipeline ---------- */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stage{
+  position:relative;border:1px solid var(--grid);border-radius:14px;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  padding:15px 13px;text-align:left;min-width:0;
+}
+.stage .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent,var(--cyan))}
+.stage .t{font-family:var(--disp);font-size:15px;font-weight:600;margin:8px 0 5px}
+.stage .d{font-size:11.5px;color:var(--ink-faint);line-height:1.4}
+.stage:not(:last-child)::after{
+  content:"→";position:absolute;right:-9px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);color:var(--ink-faint);font-size:14px;z-index:2;
+}
+@media (max-width:720px){
+  .pipe{grid-template-columns:1fr 1fr}
+  .stage:not(:last-child)::after{content:"↓";right:50%;top:auto;bottom:-15px;transform:translateX(50%)}
+  .stage:nth-child(2)::after,.stage:nth-child(4)::after{content:"→";right:-9px;top:50%;bottom:auto;transform:translateY(-50%)}
+}
+
+/* ---------- live feed (real data from /api/stock/feed) ---------- */
+.wire-note{max-width:64ch;color:var(--ink-dim);font-size:13.5px;margin:-8px 0 18px}
+.wire-note b{color:var(--ink);font-weight:600}
+.feed{display:grid;gap:12px}
+.feed-state{
+  border:1px dashed var(--grid);border-radius:var(--r);padding:26px 20px;text-align:center;
+  font-family:var(--mono);font-size:12.5px;color:var(--ink-faint);letter-spacing:.02em;line-height:1.7;
+}
+.feed-state .q{color:var(--ink-dim)}
+.fcard{
+  position:relative;border:1px solid var(--grid);border-radius:14px;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  padding:16px 18px;overflow:hidden;
+  transition:border-color .2s,transform .2s;
+}
+.fcard::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent,var(--cyan));box-shadow:0 0 14px var(--accent,var(--cyan));opacity:.8}
+.fcard.crit{--accent:var(--red)}
+.fcard:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent,var(--cyan)) 45%,var(--grid))}
+.f-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.f-sym{font-family:var(--disp);font-size:15px;font-weight:600;color:var(--ink)}
+.f-badge{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent,var(--cyan));border:1px solid color-mix(in srgb,var(--accent,var(--cyan)) 40%,var(--grid));border-radius:20px;padding:3px 9px}
+.f-time{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.f-head{font-size:14px;color:var(--ink-dim);line-height:1.5}
+.f-foot{margin-top:11px}
+.f-link{font-family:var(--mono);font-size:12px;color:var(--cyan);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.f-link:hover{color:#7fe3ff}
+.f-link .arr{transition:transform .2s}.f-link:hover .arr{transform:translateX(4px)}
+.f-nolink{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+
+/* ---------- console ---------- */
+.console{
+  border:1px solid var(--grid);border-radius:var(--r);overflow:hidden;
+  background:#0a0e15;box-shadow:0 26px 60px -34px rgba(0,0,0,.9);
+}
+.con-bar{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--grid);background:linear-gradient(180deg,var(--panel-2),var(--panel))}
+.tl{display:flex;gap:7px}
+.tl i{width:11px;height:11px;border-radius:50%;display:block}
+.tl i:nth-child(1){background:#ff5f56}.tl i:nth-child(2){background:#ffbd2e}.tl i:nth-child(3){background:#27c93f}
+.con-title{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);letter-spacing:.04em}
+.con-live{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--long)}
+.con-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--long);box-shadow:0 0 8px var(--long);animation:pulse 2.4s infinite}
+.term{
+  font-family:var(--mono);font-size:12.5px;line-height:1.7;
+  padding:16px 16px 14px;height:340px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;
+}
+.term::-webkit-scrollbar{width:9px}
+.term::-webkit-scrollbar-thumb{background:var(--grid);border-radius:8px}
+.l{display:block}
+.ts{color:var(--ink-faint)}
+.lv-INFO{color:var(--cyan)}.lv-WARN{color:var(--gold)}.lv-ERROR{color:var(--red)}.lv-DEBUG{color:var(--ink-faint)}
+.src{color:var(--violet)}
+.msg{color:var(--ink-dim)}
+.alert{color:var(--long);font-weight:500}
+.cmd-echo{color:var(--ink)}
+.cmd-echo .p{color:var(--long)}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--cyan);vertical-align:-2px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.con-cmds{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;border-top:1px solid var(--grid);background:var(--panel)}
+.cmd{
+  font-family:var(--mono);font-size:12px;color:var(--ink-dim);cursor:pointer;
+  border:1px solid var(--grid);border-radius:8px;padding:7px 13px;background:rgba(255,255,255,.02);
+  transition:color .15s,border-color .15s,background .15s;
+}
+.cmd:hover{color:var(--cyan);border-color:color-mix(in srgb,var(--cyan) 55%,var(--grid));background:rgba(61,214,245,.06)}
+.cmd .k{color:var(--ink-faint)}
+.con-note{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);padding:0 14px 12px;letter-spacing:.03em}
+
+/* ---------- two-col blocks ---------- */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:720px){.cols{grid-template-columns:1fr}}
+.block{border:1px solid var(--grid);border-radius:var(--r);background:linear-gradient(180deg,var(--panel-2),var(--panel));padding:20px}
+.block h3{font-family:var(--disp);font-size:18px;font-weight:600;margin-bottom:4px}
+.block .sub{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+
+/* watchlist */
+.wl{display:flex;flex-direction:column;gap:10px}
+.wl-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--grid);border-radius:10px;padding:11px 13px;background:rgba(255,255,255,.02)}
+.wl-name{font-size:14px;color:var(--ink);font-weight:500}
+.wl-meta{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.wl-scrip{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+
+/* alert preview (ntfy push) */
+.push{border:1px solid var(--grid);border-radius:12px;background:#0c1119;padding:14px 15px}
+.push-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.push-ic{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--long),var(--cyan));display:grid;place-items:center;font-size:15px}
+.push-app{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+.push-app b{color:var(--ink-dim);font-weight:500}
+.push-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:5px}
+.push-body{font-size:12.5px;color:var(--ink-dim);line-height:1.6}
+.push-body a{color:var(--cyan);text-decoration:none}
+.push-prio{display:inline-block;margin-top:9px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);border:1px solid color-mix(in srgb,var(--red) 40%,var(--grid));border-radius:20px;padding:3px 9px}
+
+/* deploy facts */
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+@media (max-width:560px){.facts{grid-template-columns:1fr}}
+.fact{border:1px solid var(--grid);border-radius:10px;padding:12px 13px;background:rgba(255,255,255,.02)}
+.fact .fk{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.fact .fv{font-size:13.5px;color:var(--ink-dim);margin-top:5px}
+.fact .fv b{color:var(--ink);font-weight:600}
+
+.foot{margin-top:50px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center}
+.foot a{color:var(--ink-faint);text-decoration:none}.foot a:hover{color:var(--cyan)}
+@media (prefers-reduced-motion:reduce){.dot,.con-live::before,.cursor{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← dhosae</a>
+
+  <div class="head">
+    <div class="eyebrow"><span class="dot"></span>beside the dojo — the watchtower</div>
+    <h1>Stock</h1>
+    <p class="lead">The dojo is where I learn the market. <b>Stock</b> is where I stand watch over it. A small always-on monitor polls <b>BSE corporate filings</b> for my watchlist and, the instant a company drops a <b>board-meeting announcement</b>, lands a push on my phone — so I'm never the last to know. It reads. It alerts. <b>It never trades.</b></p>
+  </div>
+
+  <div class="scope">
+    <span class="ic">🛡️</span>
+    <p><b>Alert-only by design.</b> This system has no broker connection, places no orders, and moves no money. It tells a human "a filing just dropped"; the human decides. That boundary is hard-wired and non-negotiable.</p>
+  </div>
+
+  <div class="sep">The pipeline</div>
+  <div class="pipe">
+    <div class="stage" style="--accent:var(--cyan)">
+      <div class="n">01 · poll</div>
+      <div class="t">BSE</div>
+      <div class="d">Every 60s, by scrip code. Primary &amp; reliable source.</div>
+    </div>
+    <div class="stage" style="--accent:var(--violet)">
+      <div class="n">02 · normalize</div>
+      <div class="t">Announcement</div>
+      <div class="d">id · headline · category · time (IST) · PDF link.</div>
+    </div>
+    <div class="stage" style="--accent:var(--gold)">
+      <div class="n">03 · dedup</div>
+      <div class="t">SQLite</div>
+      <div class="d">Alert once per filing. Survives restarts.</div>
+    </div>
+    <div class="stage" style="--accent:var(--amber)">
+      <div class="n">04 · filter</div>
+      <div class="t">"board meeting"</div>
+      <div class="d">Keyword gate — catches "Outcome of…" too.</div>
+    </div>
+    <div class="stage" style="--accent:var(--long)">
+      <div class="n">05 · alert</div>
+      <div class="t">ntfy + web</div>
+      <div class="d">Drops to the phone and onto this page at once.</div>
+    </div>
+  </div>
+
+  <div class="sep">On the wire — live filings</div>
+  <p class="wire-note">Every board-meeting filing the watchtower catches lands here the moment it's disclosed — the same alert that hits the phone. <b>Latency ≈ the 60s poll interval + a few seconds</b> from the instant BSE makes the filing public. Each card links straight to the BSE PDF.</p>
+  <div class="feed" id="feed">
+    <div class="feed-state" id="feed-state">Connecting to the feed…</div>
+  </div>
+
+  <div class="sep">Operator console</div>
+  <div class="console">
+    <div class="con-bar">
+      <span class="tl"><i></i><i></i><i></i></span>
+      <span class="con-title">stockmon — monitor.log</span>
+      <span class="con-live">streaming</span>
+    </div>
+    <div class="term" id="term"></div>
+    <div class="con-cmds" id="cmds">
+      <button class="cmd" data-cmd="status"><span class="k">$</span> status</button>
+      <button class="cmd" data-cmd="once"><span class="k">$</span> once</button>
+      <button class="cmd" data-cmd="tail"><span class="k">$</span> tail</button>
+      <button class="cmd" data-cmd="seed"><span class="k">$</span> seed</button>
+      <button class="cmd" data-cmd="restart"><span class="k">$</span> restart</button>
+    </div>
+    <div class="con-note">allow-listed commands only — no free-form shell. this preview replays a representative session; the live console streams the running service over TLS behind auth.</div>
+  </div>
+
+  <div class="sep">On watch</div>
+  <div class="cols">
+    <div class="block">
+      <h3>Watchlist</h3>
+      <div class="sub">7 names · BSE scrip codes</div>
+      <div class="wl">
+        <div class="wl-row"><div><div class="wl-name">Reliance Industries</div><div class="wl-meta">RELIANCE</div></div><div class="wl-scrip">500325</div></div>
+        <div class="wl-row"><div><div class="wl-name">Tata Consultancy Services</div><div class="wl-meta">TCS</div></div><div class="wl-scrip">532540</div></div>
+        <div class="wl-row"><div><div class="wl-name">NTPC</div><div class="wl-meta">NTPC</div></div><div class="wl-scrip">532555</div></div>
+        <div class="wl-row"><div><div class="wl-name">NTPC Green Energy</div><div class="wl-meta">NTPCGREEN</div></div><div class="wl-scrip">544289</div></div>
+        <div class="wl-row"><div><div class="wl-name">Bharat Heavy Electricals</div><div class="wl-meta">BHEL</div></div><div class="wl-scrip">500103</div></div>
+        <div class="wl-row"><div><div class="wl-name">Adani Energy Solutions</div><div class="wl-meta">ADANIENSOL</div></div><div class="wl-scrip">539254</div></div>
+        <div class="wl-row"><div><div class="wl-name">Adani Green Energy</div><div class="wl-meta">ADANIGREEN</div></div><div class="wl-scrip">541450</div></div>
+      </div>
+    </div>
+    <div class="block">
+      <h3>The alert</h3>
+      <div class="sub">what lands on the phone</div>
+      <div class="push">
+        <div class="push-top">
+          <span class="push-ic">🚨</span>
+          <span class="push-app"><b>ntfy</b> · stockmon</span>
+        </div>
+        <div class="push-title">🚨 [BSE] RELIANCE</div>
+        <div class="push-body">Outcome of Board Meeting<br>Category: Outcome of Board Meeting<br>2026-06-18 09:14 IST<br><a href="#">AttachLive/…board_outcome.pdf</a></div>
+        <span class="push-prio">urgent · rotating_light</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep">How it runs</div>
+  <div class="facts">
+    <div class="fact"><div class="fk">process</div><div class="fv">always-on loop as a <b>non-root systemd service</b>, auto-restart on crash, starts on boot</div></div>
+    <div class="fact"><div class="fk">web console</div><div class="fv">FastAPI + SSE log stream behind a <b>reverse proxy, TLS &amp; auth</b></div></div>
+    <div class="fact"><div class="fk">first run</div><div class="fv"><b>seed</b> marks today's filings as seen — no flood on startup</div></div>
+    <div class="fact"><div class="fk">channel</div><div class="fv"><b>ntfy push</b> only — Discord &amp; email wired but off</div></div>
+  </div>
+
+  <div class="foot">STOCK · dhosae.in · alert-only · educational — not investment advice · <a href="/dojo">the dojo →</a></div>
+</div>
+
+<script>
+(function(){
+  const term = document.getElementById("term");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function line(html){
+    const el = document.createElement("span");
+    el.className = "l";
+    el.innerHTML = html;
+    term.appendChild(el);
+    term.scrollTop = term.scrollHeight;
+    return el;
+  }
+  function log(ts, level, src, msg, cls){
+    return line(
+      '<span class="ts">'+ts+'</span> ' +
+      '<span class="lv-'+level+'">'+level.padEnd(5)+'</span> ' +
+      '<span class="src">'+src+':</span> ' +
+      '<span class="'+(cls||'msg')+'">'+msg+'</span>'
+    );
+  }
+
+  // A representative boot-to-alert session, faithful to the real log format:
+  //   %(asctime)s %(levelname)s %(name)s: %(message)s
+  const boot = [
+    ["2026-06-18 09:00:01","INFO","main","source ready: BSE"],
+    ["2026-06-18 09:00:01","INFO","alert","alert channel enabled: ntfy"],
+    ["2026-06-18 09:00:01","INFO","runner","monitor started; 1 source(s), 2 watchlist item(s), 248 seen in db"],
+    ["2026-06-18 09:03:11","DEBUG","runner","cycle: 0 new"],
+    ["2026-06-18 09:08:42","DEBUG","runner","cycle: 0 new"],
+    ["2026-06-18 09:14:22","INFO","runner","cycle: 1 new announcement(s)"],
+    ["2026-06-18 09:14:22","INFO","runner","ALERTED BSE RELIANCE | Outcome of Board Meeting","alert"],
+    ["2026-06-18 09:14:22","INFO","alert","ntfy push sent (urgent) → RELIANCE"],
+    ["2026-06-18 09:19:50","DEBUG","runner","cycle: 0 new"],
+  ];
+
+  let cursor = null;
+  function showCursor(){
+    cursor = document.createElement("span");
+    cursor.className = "cursor";
+    term.appendChild(cursor);
+  }
+  function hideCursor(){ if(cursor){ cursor.remove(); cursor=null; } }
+
+  let i = 0;
+  function step(){
+    if(i < boot.length){
+      const [ts,lv,src,msg,cls] = boot[i++];
+      log(ts,lv,src,msg,cls);
+      const delay = reduce ? 0 : (i===6 ? 900 : 360 + Math.random()*420);
+      if(reduce){ step(); } else { setTimeout(step, delay); }
+    } else {
+      showCursor();
+    }
+  }
+  step();
+
+  // Allow-listed command console — canned, accurate responses (no shell).
+  const responses = {
+    status: [
+      ["echo","status"],
+      ["raw",'<span class="alert">● stockmon.service</span> <span class="msg">— Indian stock corporate-announcement monitor</span>'],
+      ["raw",'<span class="msg">   Active: </span><span class="alert">active (running)</span><span class="msg"> since 2026-06-18 09:00:01 IST</span>'],
+      ["raw",'<span class="msg">   Sources: BSE · Watchlist: 2 · Filter: keywords["board meeting"] · Channel: ntfy</span>'],
+    ],
+    once: [
+      ["echo","once"],
+      ["log","INFO","main","running single pass…"],
+      ["log","INFO","runner","single pass complete: 0 new"],
+    ],
+    tail: [
+      ["echo","tail"],
+      ["log","INFO","runner","ALERTED BSE RELIANCE | Outcome of Board Meeting","alert"],
+      ["log","INFO","alert","ntfy push sent (urgent) → RELIANCE"],
+      ["log","DEBUG","runner","cycle: 0 new"],
+    ],
+    seed: [
+      ["echo","seed"],
+      ["log","INFO","main","seed complete: marked 12 existing announcement(s) as seen (no alerts sent)"],
+    ],
+    restart: [
+      ["echo","restart"],
+      ["log","INFO","main","stockmon.service restarted — back on watch"],
+    ],
+  };
+
+  function runCmd(name){
+    hideCursor();
+    const steps = responses[name];
+    if(!steps) return;
+    line(""); // spacer
+    let k = 0;
+    function next(){
+      if(k >= steps.length){ showCursor(); return; }
+      const s = steps[k++];
+      if(s[0]==="echo"){
+        line('<span class="cmd-echo"><span class="p">stockmon ❯</span> '+s[1]+'</span>');
+      } else if(s[0]==="log"){
+        log("2026-06-18 09:21:07", s[1], s[2], s[3], s[4]);
+      } else {
+        line(s[1]);
+      }
+      if(reduce){ next(); } else { setTimeout(next, 220); }
+    }
+    next();
+  }
+
+  document.getElementById("cmds").addEventListener("click", function(e){
+    const btn = e.target.closest(".cmd");
+    if(btn) runCmd(btn.getAttribute("data-cmd"));
+  });
+})();
+
+// ---- the live feed: real filings the monitor dropped to /api/stock/ingest ----
+(function(){
+  const feed = document.getElementById("feed");
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone:"Asia/Kolkata", day:"2-digit", month:"short",
+    hour:"2-digit", minute:"2-digit", hour12:false,
+  });
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => (
+    {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  function when(ts){ const d=new Date(ts); return isNaN(d) ? esc(ts) : fmt.format(d)+" IST"; }
+
+  function state(html){ feed.innerHTML = '<div class="feed-state">'+html+'</div>'; }
+
+  function card(a){
+    const crit = a.critical ? " crit" : "";
+    const badge = a.category ? '<span class="f-badge">'+esc(a.category)+'</span>' : '';
+    const link = a.url
+      ? '<a class="f-link" href="'+esc(a.url)+'" target="_blank" rel="noopener">view filing on BSE <span class="arr">→</span></a>'
+      : '<span class="f-nolink">no attachment</span>';
+    return ''
+      + '<article class="fcard'+crit+'">'
+      +   '<div class="f-top">'
+      +     '<span class="f-sym">'+esc(a.symbol||a.source||"—")+'</span>'
+      +     badge
+      +     '<span class="f-time">'+when(a.ts)+'</span>'
+      +   '</div>'
+      +   '<p class="f-head">'+esc(a.headline||"(no headline)")+'</p>'
+      +   '<div class="f-foot">'+link+'</div>'
+      + '</article>';
+  }
+
+  async function load(){
+    try{
+      const r = await fetch("/api/stock/feed?limit=30", { headers:{ "Accept":"application/json" }, cache:"no-store" });
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const data = await r.json();
+      const list = (data && data.alerts) || [];
+      if(list.length === 0){
+        state('<span class="q">The watchtower is quiet — no filings yet.</span><br>The instant a watchlisted company files a board-meeting announcement on BSE, it appears here.');
+        return;
+      }
+      feed.innerHTML = list.map(card).join("");
+    }catch(e){
+      state('<span class="q">Feed unavailable.</span><br>The monitor isn\'t connected yet — once it\'s running and POSTing to /api/stock/ingest, live filings show here.');
+    }
+  }
+  load();
+  setInterval(load, 30000); // refresh; ntfy is instant, the page catches up within 30s
+})();
+</script>
+</body>
+</html>

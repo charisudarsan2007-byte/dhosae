@@ -95,6 +95,23 @@ const showNote = c.creed_title.trim() !== "";
     </a>
   </section>
 
+  <!-- ============ STOCK (the watchtower beside the dojo — a second dark doorway) ============ -->
+  <section class="stock container" aria-labelledby="stock-h">
+    <a href="/stock" class="stock__card" data-reveal>
+      <div class="stock__body">
+        <p class="stock__eyebrow mono"><span class="stock__dot" aria-hidden="true"></span>beside the dojo — the watchtower</p>
+        <h2 class="stock__title" id="stock-h">Stock</h2>
+        <p class="stock__lead">
+          A small always-on monitor stands watch over BSE filings. The moment a
+          company on my watchlist drops a board-meeting announcement, a push lands
+          on my phone. It reads and it alerts — it never trades.
+        </p>
+        <p class="stock__meta mono">Alert-only · BSE corporate filings · live console</p>
+      </div>
+      <span class="stock__go mono">enter the watchtower <span class="arrow">→</span></span>
+    </a>
+  </section>
+
   <!-- ============ THE STANDING NOTE (warm, first person — written in /studio) ============ -->
   {showNote && (
     <section class="note" aria-labelledby="note-h">
@@ -398,6 +415,97 @@ const showNote = c.creed_title.trim() !== "";
   .dojo__card:hover .dojo__go .arrow { transform: translateX(6px); }
   @media (prefers-reduced-motion: reduce) {
     .dojo__dot { animation: none; }
+  }
+
+  /* ---------- STOCK (a second dark doorway — cool/cyan, the watchtower) ---------- */
+  .stock { margin-top: var(--space-lg); }
+  .stock__card {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    padding: clamp(1.8rem, 1.2rem + 2.4vw, 3rem) clamp(1.4rem, 1rem + 2vw, 2.6rem);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(120% 140% at 100% 0%, #11212a 0%, #0d161d 55%),
+      #0a1117;
+    border: 1px solid #1c2b33;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .stock__card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(#ffffff05 1px, transparent 1px),
+      linear-gradient(90deg, #ffffff05 1px, transparent 1px);
+    background-size: 34px 34px;
+    pointer-events: none;
+  }
+  .stock__card:hover {
+    transform: translateY(-3px);
+    border-color: #3dd6f555;
+    box-shadow: var(--shadow-lg);
+  }
+  .stock__body { position: relative; max-width: 52ch; }
+  .stock__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: var(--step--1);
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+    color: #7fd9ef;
+    margin-bottom: var(--space-sm);
+  }
+  .stock__dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 100px;
+    background: #11e29b;
+    box-shadow: 0 0 10px #11e29b;
+    animation: dojo-pulse 2.4s var(--ease) infinite;
+  }
+  .stock__title {
+    font-family: var(--font-display);
+    font-weight: 460;
+    font-size: var(--step-4);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    color: #eaf4fb;
+    margin: 0;
+  }
+  .stock__lead {
+    margin-top: var(--space-md);
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: #c4d2dd;
+  }
+  .stock__meta {
+    margin-top: var(--space-md);
+    font-size: var(--step--1);
+    letter-spacing: 0.04em;
+    color: #6f8492;
+  }
+  .stock__go {
+    position: relative;
+    white-space: nowrap;
+    font-size: var(--step-0);
+    letter-spacing: 0.04em;
+    color: #eaf4fb;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid #3dd6f566;
+  }
+  .stock__go .arrow { display: inline-block; transition: transform 240ms var(--ease); }
+  .stock__card:hover .stock__go { color: #6fe3ff; }
+  .stock__card:hover .stock__go .arrow { transform: translateX(6px); }
+  @media (prefers-reduced-motion: reduce) {
+    .stock__dot { animation: none; }
   }
 
   /* ---------- THE STANDING NOTE ---------- */

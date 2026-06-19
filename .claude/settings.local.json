@@ -33,7 +33,21 @@
       "Bash(git -c user.email=\"orangehead0007@gmail.com\" -c user.name=\"dhosae\" commit -q -m \"dhosae: site + private studio + emotions band + footer studio link\")",
       "Bash(grep -E '\\\\.env$|dhosae\\\\.db')",
       "PowerShell(npm run build 2>&1)",
-      "Bash(node -e \"const p=require\\('C:/Users/4e/dhosae.in/package.json'\\);console.log\\(JSON.stringify\\(p.scripts\\)\\)\")"
+      "Bash(node -e \"const p=require\\('C:/Users/4e/dhosae.in/package.json'\\);console.log\\(JSON.stringify\\(p.scripts\\)\\)\")",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\4e\\\\dhosae.in\\\\public\\\\dojo\" | Out-Null; Copy-Item \"C:\\\\Users\\\\4e\\\\Downloads\\\\futures-terminal.html\" \"C:\\\\Users\\\\4e\\\\dhosae.in\\\\public\\\\dojo\\\\index.html\" -Force; \\(Get-Item \"C:\\\\Users\\\\4e\\\\dhosae.in\\\\public\\\\dojo\\\\index.html\"\\).Length)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\4e\\\\dhosae.in\\\\src\\\\dojo\")",
+      "PowerShell(Move-Item \"C:\\\\Users\\\\4e\\\\dhosae.in\\\\public\\\\dojo\\\\index.html\" \"C:\\\\Users\\\\4e\\\\dhosae.in\\\\src\\\\dojo\\\\futures.html\" -Force)",
+      "Bash(git commit -m '@ *)",
+      "Bash(git commit *)",
+      "Bash(echo \"---src/dojo---\" && ls -la src/dojo && echo \"---dojo.ts---\" && cat src/pages/dojo.ts && echo \"---downloads file size---\" && ls -la /c/Users/4e/Downloads/supply-chain-ch1-study-guide.html)",
+      "WebSearch",
+      "Bash(python -c \"import sqlite3; c=sqlite3.connect\\('dhosae.db'\\); n=c.execute\\(\\\\\"DELETE FROM stock_alerts WHERE uid IN \\('BSE:551001','BSE:551002'\\)\\\\\"\\).rowcount; c.commit\\(\\); print\\('deleted',n,'rows; remaining:',c.execute\\('SELECT COUNT\\(*\\) FROM stock_alerts'\\).fetchone\\(\\)[0]\\)\")",
+      "Bash(sqlite3 dhosae.db \"DELETE FROM stock_alerts;\")",
+      "Bash(netlify --version)",
+      "Bash(netlify status *)",
+      "Bash(grep -iE \"\\\\.venv|__pycache__|/data/|\\\\.pyc|\\\\.db$|\\\\.log$\")"
     ]
   }
 }

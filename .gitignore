@@ -28,3 +28,10 @@ Thumbs.db
 # local database
 dhosae.db
 dhosae.db-*
+
+# python monitor (stockmon) — virtualenv, caches, and runtime data
+**/.venv/
+**/__pycache__/
+*.pyc
+stock_monitor/**/data/
+*.db

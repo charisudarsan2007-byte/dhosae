@@ -1,0 +1,7 @@
+bse>=3.3.0
+nse
+requests
+PyYAML
+feedparser
+httpx[http2]
+tzdata  ; needed for ZoneInfo("Asia/Kolkata") on Windows and slim Linux images

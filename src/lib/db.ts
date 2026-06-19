@@ -59,6 +59,20 @@ export function ready(): Promise<void> {
            body TEXT NOT NULL DEFAULT '',
            updated_at TEXT NOT NULL
          )`,
+        // The watchtower's web feed: every filing the stock monitor alerts on is
+        // POSTed here (alongside the ntfy push) so /stock can show it live.
+        // Keyed on the exchange's own id (e.g. "BSE:123456") so a re-POST is a no-op.
+        `CREATE TABLE IF NOT EXISTS stock_alerts (
+           uid TEXT PRIMARY KEY,
+           source TEXT NOT NULL DEFAULT 'BSE',
+           symbol TEXT NOT NULL DEFAULT '',
+           headline TEXT NOT NULL DEFAULT '',
+           category TEXT NOT NULL DEFAULT '',
+           url TEXT NOT NULL DEFAULT '',
+           ts TEXT NOT NULL,
+           critical INTEGER NOT NULL DEFAULT 0,
+           received_at TEXT NOT NULL
+         )`,
       ],
       "write"
     );
@@ -249,6 +263,70 @@ export async function setNote(day: string, body: string): Promise<void> {
     sql: `INSERT INTO notes (day, body, updated_at) VALUES (?, ?, ?)
           ON CONFLICT(day) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at`,
     args: [day, trimmed, new Date().toISOString()],
+  });
+}
+
+// ---- the watchtower feed (stock monitor → web) ------------------------------
+// The Python monitor (stockmon) fans an alert out to ntfy AND to this site's
+// /api/stock/ingest, which lands here. /stock and /api/stock/feed read it back.
+
+export interface StockAlert {
+  uid: string;
+  source: string;
+  symbol: string;
+  headline: string;
+  category: string;
+  url: string;
+  ts: string; // announcement time, ISO (or whatever the monitor sent)
+  critical: boolean;
+  receivedAt: string; // when this site ingested it
+}
+
+function rowToStockAlert(r: Record<string, unknown>): StockAlert {
+  return {
+    uid: String(r.uid),
+    source: String(r.source ?? "BSE"),
+    symbol: String(r.symbol ?? ""),
+    headline: String(r.headline ?? ""),
+    category: String(r.category ?? ""),
+    url: String(r.url ?? ""),
+    ts: String(r.ts),
+    critical: Number(r.critical) === 1,
+    receivedAt: String(r.received_at),
+  };
+}
+
+/** Newest filings first. Capped so the feed stays light. */
+export async function getStockAlerts(limit = 30): Promise<StockAlert[]> {
+  await ready();
+  const n = Math.max(1, Math.min(100, Math.floor(limit)));
+  const res = await client().execute({
+    sql: `SELECT * FROM stock_alerts ORDER BY ts DESC, received_at DESC LIMIT ?`,
+    args: [n],
+  });
+  return res.rows.map((r) => rowToStockAlert(r as Record<string, unknown>));
+}
+
+/** Record one filing. Re-POSTing the same uid is a harmless no-op (dedup). */
+export async function insertStockAlert(
+  a: Omit<StockAlert, "receivedAt"> & { receivedAt?: string }
+): Promise<void> {
+  await ready();
+  await client().execute({
+    sql: `INSERT INTO stock_alerts (uid, source, symbol, headline, category, url, ts, critical, received_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(uid) DO NOTHING`,
+    args: [
+      a.uid,
+      a.source || "BSE",
+      a.symbol || "",
+      a.headline || "",
+      a.category || "",
+      a.url || "",
+      a.ts,
+      a.critical ? 1 : 0,
+      a.receivedAt ?? new Date().toISOString(),
+    ],
   });
 }
 

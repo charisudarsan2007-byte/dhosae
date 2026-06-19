@@ -1,0 +1,64 @@
+poll_interval_seconds: 60
+
+# Active window in IST. Board-meeting outcomes often post in the evening, so
+# this is wider than market hours. Outside it, the loop sleeps and sends nothing.
+active_hours:
+  start: "08:00"
+  end:   "23:00"
+  weekdays_only: true
+
+watchlist:
+  # bse_scrip is the fastest path. If you omit it, the BSE source will try to
+  # resolve it from `name` at startup. nse_symbol is required for the NSE source.
+  - name: "Reliance Industries"
+    bse_scrip: "500325"
+    nse_symbol: "RELIANCE"
+  - name: "Tata Consultancy Services"
+    bse_scrip: "532540"
+    nse_symbol: "TCS"
+
+sources:
+  bse: true            # primary, reliable
+  nse: false           # best-effort; flip to true once BSE works for you
+  nse_server_mode: true  # httpx + HTTP/2; keep true on cloud VMs
+
+storage:
+  db_path: "./data/monitor.db"
+  data_folder: "./data"   # library cookie/cache folder
+
+# Only alert on matching announcements. Leave lists empty to alert on everything.
+filters:
+  keywords: []   # e.g. ["order", "result", "acquisition", "buyback", "fundraise"]
+  categories: [] # e.g. ["Board Meeting", "Result"]
+
+# ---- Alerting (no Telegram) ----------------------------------------------
+# Enable any combination. Secrets are read from environment variables, never
+# stored here. See .env.example.
+alerting:
+  channels:
+
+    # ntfy.sh - easiest Telegram replacement. Install the "ntfy" app, subscribe
+    # to your topic, done. Pick a long, unguessable topic name (it is public).
+    ntfy:
+      enabled: true
+      server: "https://ntfy.sh"
+      topic: "stockmon-CHANGE-ME-to-something-random-7f3a9"
+      token_env: ""          # only for protected/self-hosted topics
+
+    # Discord incoming webhook. Server Settings -> Integrations -> Webhooks.
+    discord:
+      enabled: false
+      webhook_url_env: "DISCORD_WEBHOOK_URL"
+
+    # Email via SMTP (use an app-specific password, e.g. a Gmail App Password).
+    email:
+      enabled: false
+      smtp_host: "smtp.gmail.com"
+      smtp_port: 587
+      user_env: "SMTP_USER"
+      password_env: "SMTP_PASS"
+      to: "you@example.com"
+
+logging:
+  level: "INFO"
+  file: "./data/monitor.log"

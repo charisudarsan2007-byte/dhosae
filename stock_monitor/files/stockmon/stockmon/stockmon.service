@@ -1,0 +1,16 @@
+# Install: sudo cp stockmon.service /etc/systemd/system/
+#          sudo systemctl daemon-reload && sudo systemctl enable --now stockmon
+[Unit]
+Description=Indian Stock Announcement Monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/opt/stockmon
+EnvironmentFile=/opt/stockmon/.env
+ExecStart=/opt/stockmon/.venv/bin/python -m monitor.main
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

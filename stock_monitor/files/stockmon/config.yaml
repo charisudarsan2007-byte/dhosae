@@ -1,0 +1,95 @@
+poll_interval_seconds: 60
+
+# Active window in IST. Board-meeting outcomes often post in the evening, so
+# this is wider than market hours. Outside it, the loop sleeps and sends nothing.
+active_hours:
+  start: "08:00"
+  end:   "23:00"
+  weekdays_only: true
+
+watchlist:
+  # bse_scrip is the fastest path. If you omit it, the BSE source will try to
+  # resolve it from `name` at startup. nse_symbol is required for the NSE source.
+  # All scrip codes below verified against bseindia.com, 2026-06-18.
+  - name: "Reliance Industries"
+    bse_scrip: "500325"
+    nse_symbol: "RELIANCE"
+  - name: "Tata Consultancy Services"
+    bse_scrip: "532540"
+    nse_symbol: "TCS"
+  - name: "NTPC"
+    bse_scrip: "532555"
+    nse_symbol: "NTPC"
+  - name: "NTPC Green Energy"
+    bse_scrip: "544289"
+    nse_symbol: "NTPCGREEN"
+  - name: "Bharat Heavy Electricals (BHEL)"
+    bse_scrip: "500103"
+    nse_symbol: "BHEL"
+  - name: "Adani Energy Solutions"
+    bse_scrip: "539254"
+    nse_symbol: "ADANIENSOL"
+  - name: "Adani Green Energy"
+    bse_scrip: "541450"
+    nse_symbol: "ADANIGREEN"
+
+sources:
+  bse: true            # primary, reliable
+  nse: false           # best-effort; flip to true once BSE works for you
+  nse_server_mode: true  # httpx + HTTP/2; keep true on cloud VMs
+
+storage:
+  db_path: "./data/monitor.db"
+  data_folder: "./data"   # library cookie/cache folder
+
+# Only alert on matching announcements. Leave lists empty to alert on everything.
+#
+# IMPORTANT for board-meeting trading: use KEYWORDS, not categories. BSE tags these
+# as CATEGORYNAME="Board Meeting" but SUBCATNAME varies ("Board Meeting" vs
+# "Outcome of Board Meeting"), and the source maps category=SUBCATNAME. An exact
+# `categories: ["Board Meeting"]` filter therefore SILENTLY MISSES the all-important
+# "Outcome of Board Meeting" filings. The keyword below (substring match across the
+# headline + category) catches both. Verified against live BSE data 2026-06-18.
+filters:
+  keywords: ["board meeting"]   # add more if useful, e.g. "fund raising", "dividend", "buyback"
+  categories: []                # exact-match only; read the warning above before using
+
+# ---- Alerting (no Telegram) ----------------------------------------------
+# Enable any combination. Secrets are read from environment variables, never
+# stored here. See .env.example.
+alerting:
+  channels:
+
+    # ntfy.sh - easiest Telegram replacement. Install the "ntfy" app, subscribe
+    # to your topic, done. Pick a long, unguessable topic name (it is public).
+    ntfy:
+      enabled: true
+      server: "https://ntfy.sh"
+      topic: "stockmon-CHANGE-ME-to-something-random-7f3a9"
+      token_env: ""          # only for protected/self-hosted topics
+
+    # Discord incoming webhook. Server Settings -> Integrations -> Webhooks.
+    discord:
+      enabled: false
+      webhook_url_env: "DISCORD_WEBHOOK_URL"
+
+    # Email via SMTP (use an app-specific password, e.g. a Gmail App Password).
+    email:
+      enabled: false
+      smtp_host: "smtp.gmail.com"
+      smtp_port: 587
+      user_env: "SMTP_USER"
+      password_env: "SMTP_PASS"
+      to: "you@example.com"
+
+    # Web feed - POSTs each filing to dhosae.in so it also shows on /stock.
+    # The page reads it back from /api/stock/feed. Set STOCK_INGEST_TOKEN in .env
+    # to the SAME value configured on the website (its STOCK_INGEST_TOKEN env).
+    web:
+      enabled: true
+      ingest_url: "https://dhosae.in/api/stock/ingest"
+      token_env: "STOCK_INGEST_TOKEN"
+
+logging:
+  level: "INFO"
+  file: "./data/monitor.log"

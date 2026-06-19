@@ -1,0 +1,6 @@
+bse>=3.3.0
+nse
+requests
+PyYAML
+feedparser
+httpx[http2]
